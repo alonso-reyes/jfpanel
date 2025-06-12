@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: jfpanel
+    env: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths:
+        - Dockerfile
+        - .render.yaml
+        - '**/*.php'
+        - '**/*.env'
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        value: base64:REEMPLAZA_ESTO
+      - key: APP_URL
+        value: https://jfpanel.onrender.com
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        value: TU_HOST
+      - key: DB_PORT
+        value: 3306
+      - key: DB_DATABASE
+        value: jefes_frente
+      - key: DB_USERNAME
+        value: root
+      - key: DB_PASSWORD
+        value: 
