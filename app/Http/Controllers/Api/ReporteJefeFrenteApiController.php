@@ -17,6 +17,8 @@ use App\Models\ZonaTrabajoDibujo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Cloudinary\Cloudinary;
+
 
 class ReporteJefeFrenteApiController extends Controller
 {
@@ -32,6 +34,22 @@ class ReporteJefeFrenteApiController extends Controller
             'data.usuario_id' => 'required|exists:usuarios_jefe_frente,id',
             'data.turno.id' => 'required|exists:turnos,id',
             'data.zona_trabajo.id' => 'required|exists:zonas_trabajo,id',
+        ]);
+
+        // Configurar Cloudinary
+        $cloudName = config('cloudinary.cloud_name');
+        $apiKey = config('cloudinary.api_key');
+        $apiSecret = config('cloudinary.api_secret');
+
+        $cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => $cloudName,
+                'api_key'    => $apiKey,
+                'api_secret' => $apiSecret,
+            ],
+            'url' => [
+                'secure' => true
+            ]
         ]);
 
         // Obtener los datos de la solicitud
@@ -61,11 +79,20 @@ class ReporteJefeFrenteApiController extends Controller
             if (!empty($data['data']['zona_trabajo']['imagen_dibujada'])) {
                 $imagen = $data['data']['zona_trabajo']['imagen_dibujada'];
                 $image = base64_decode($imagen);
-                $imageName = $reporte_id . '_' . $zona_id . '_' . time() . '_' . uniqid() . '.jpg';
-                $imagePath = public_path('images/zona_trabajo/' . $imageName);
-
+                // $imageName = $reporte_id . '_' . $zona_id . '_' . time() . '_' . uniqid() . '.jpg';
+                // $imagePath = public_path('images/zona_trabajo/' . $imageName);
+                //file_put_contents($imagePath, $image);
+                $tempPath = tempnam(sys_get_temp_dir(), 'cloud');
                 // Guardar la imagen en el servidor
-                file_put_contents($imagePath, $image);
+                file_put_contents($tempPath, $image);
+
+                $uploaded = $cloudinary->uploadApi()->upload($tempPath, [
+                    'folder' => 'zona_trabajo_reportes',
+                    'use_filename' => true,
+                    'unique_filename' => true,
+                ]);
+
+                $imageUrl = $uploaded['secure_url'];
             }
 
             //Log::info('Ruta de la imagen dibujada: ' . $imagePath);
@@ -78,7 +105,7 @@ class ReporteJefeFrenteApiController extends Controller
                     : null,
                 'color' => '#000000',
                 'grosor' => 1.0,
-                'ruta_imagen' => $imageName
+                'ruta_imagen' => $imageUrl
             ]);
 
             //Log::info('Dibujo combinado creado:', $dibujo->toArray());
@@ -190,16 +217,26 @@ class ReporteJefeFrenteApiController extends Controller
 
                 // Decodificar la imagen base64
                 $image = base64_decode($fotografia['image']);
-                $imageName = 'foto_' . time() . '_' . uniqid() . '.jpg';
-                $path = public_path('images/' . $imageName);
+                // $imageName = 'foto_' . time() . '_' . uniqid() . '.jpg';
+                // $path = public_path('images/' . $imageName);
+                // file_put_contents($path, $image);
+                $image = base64_decode($fotografia['image']);
+                $tempPath = tempnam(sys_get_temp_dir(), 'cloud');
+                file_put_contents($tempPath, $image);
 
-                // Guardar la imagen en el servidor
-                file_put_contents($path, $image);
+                $uploaded = $cloudinary->uploadApi()->upload($tempPath, [
+                    'folder' => 'fotografias_reportes',
+                    'use_filename' => true,
+                    'unique_filename' => true,
+                ]);
+
+                $imageUrl = $uploaded['secure_url'];
 
                 // Guardar en la base de datos con descripción
                 $reportefotos = ReporteFotografia::create([
                     'reporte_frente_id' => $reporte->id,
-                    'url' => 'images/' . $imageName,
+                    // 'url' => 'images/' . $imageName,
+                    'url' => $imageUrl,
                     'descripcion' => $fotografia['description'] ?? null,
                 ]);
             }

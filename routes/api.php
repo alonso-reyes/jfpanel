@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\ReporteJefeFrenteApiController;
 use App\Http\Controllers\Api\ReporteWhatsappApiController;
 use App\Http\Controllers\Api\TipoMaquinariaApiController;
 use App\Models\Conceptos;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

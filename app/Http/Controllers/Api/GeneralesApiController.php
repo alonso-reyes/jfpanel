@@ -54,7 +54,9 @@ class GeneralesApiController extends Controller
                     'nombre' => $zona->nombre,
                     'descripcion' => $zona->descripcion,
                     'obra_id' => $zona->obra_id,
-                    'imagen_url' => asset('storage/' . str_replace('\\', '/', $zona->imagen)),
+                    'imagen_url' => $zona->getImagenUrlAttribute(),
+                    //'imagen_url' => $zona->imagen_url,
+                    //'imagen_url' => asset('storage/' . str_replace('\\', '/', $zona->imagen)),
                 ];
             })->values()->toArray(),
         ];

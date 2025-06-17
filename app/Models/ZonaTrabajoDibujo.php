@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Orchid\Attachment\Attachable;
 use Orchid\Filters\Filterable;
 use Orchid\Screen\AsSource;
+use Illuminate\Support\Str;
+
 
 class ZonaTrabajoDibujo extends Model
 {
@@ -35,13 +37,30 @@ class ZonaTrabajoDibujo extends Model
         return $this->belongsTo(ZonaTrabajo::class);
     }
 
+    // public function getImagenUrlAttribute()
+    // {
+    //     return $this->imagen_path ? asset('storage/' . $this->imagen_path) : null;
+    // }
+
     public function getImagenUrlAttribute()
     {
-        return $this->imagen_path ? asset('storage/' . $this->imagen_path) : null;
+        if (!$this->imagen) {
+            return null;
+        }
+
+        // Si la imagen ya es una URL (ej. Cloudinary), simplemente la regresamos
+        if (Str::startsWith($this->imagen, ['http://', 'https://'])) {
+            return $this->imagen;
+        }
+
+        // Si no es URL, se asume que está en storage local
+        return asset('storage/' . str_replace('\\', '/', $this->imagen));
+        //return $this->imagen ? asset('storage/' . $this->imagen) : null;
     }
 
     public function tieneImagen()
     {
-        return !empty($this->ruta_imagen) && file_exists(public_path('images/zona_trabajo/' . basename($this->ruta_imagen)));
+        //return !empty($this->ruta_imagen) && file_exists(public_path('images/zona_trabajo/' . basename($this->ruta_imagen)));
+        return !empty($this->ruta_imagen) && filter_var($this->ruta_imagen, FILTER_VALIDATE_URL);
     }
 }

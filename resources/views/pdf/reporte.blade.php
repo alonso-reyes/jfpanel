@@ -508,13 +508,14 @@
                         @foreach($pair as $foto)
                         <td style="width: 50%; padding: 5px; vertical-align: top;">
                             @php
-                            $publicPath = public_path('images/'.basename($foto->url));
-                            $storagePath = storage_path('app/public/images/'.basename($foto->url));
-
-                            $imagePath = file_exists($publicPath) ? $publicPath :
-                            (file_exists($storagePath) ? $storagePath : null);
-
-                            $imageSrc = $imagePath ? 'data:image/jpeg;base64,'.base64_encode(file_get_contents($imagePath)) : null;
+                            /*$imageSrc = null;
+                            foreach ($reporte->dibujosZonaTrabajo as $dibujo) {
+                            if (!empty($dibujo->ruta_imagen)) {
+                            $imageSrc = $dibujo->ruta_imagen;
+                            break; // Tomamos la primera imagen válida y salimos del bucle
+                            }
+                            }*/
+                            $imageSrc = $foto->url;
                             @endphp
 
                             <!-- Contenedor de imagen con tamaño fijo -->

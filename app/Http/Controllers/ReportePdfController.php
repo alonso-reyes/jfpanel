@@ -60,21 +60,30 @@ class ReportePdfController extends Controller
         //     }
         // }
 
+        /// CODIGO PARA CARGAR IMAGENES DE DIBUJOS DE ZONA DE TRABAJO DE FORM LOCAL
+        // $imageSrc = null;
+        // foreach ($reporte->dibujosZonaTrabajo as $dibujo) {
+        //     if (!empty($dibujo->ruta_imagen)) {
+        //         try {
+        //             $filename = basename($dibujo->ruta_imagen);
+        //             $publicPath = public_path('images/zona_trabajo/' . $filename);
+
+        //             if (file_exists($publicPath)) {
+        //                 $imageData = file_get_contents($publicPath);
+        //                 $imageSrc = 'data:image/jpeg;base64,' . base64_encode($imageData);
+        //                 break; // Tomamos la primera imagen válida y salimos del bucle
+        //             }
+        //         } catch (\Exception $e) {
+        //             Log::error("Error cargando imagen: " . $e->getMessage());
+        //         }
+        //     }
+        // }
+
         $imageSrc = null;
         foreach ($reporte->dibujosZonaTrabajo as $dibujo) {
             if (!empty($dibujo->ruta_imagen)) {
-                try {
-                    $filename = basename($dibujo->ruta_imagen);
-                    $publicPath = public_path('images/zona_trabajo/' . $filename);
-
-                    if (file_exists($publicPath)) {
-                        $imageData = file_get_contents($publicPath);
-                        $imageSrc = 'data:image/jpeg;base64,' . base64_encode($imageData);
-                        break; // Tomamos la primera imagen válida y salimos del bucle
-                    }
-                } catch (\Exception $e) {
-                    Log::error("Error cargando imagen: " . $e->getMessage());
-                }
+                $imageSrc = $dibujo->ruta_imagen;
+                break; // Tomamos la primera imagen válida y salimos del bucle
             }
         }
 

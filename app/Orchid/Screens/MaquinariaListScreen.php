@@ -118,9 +118,20 @@ class MaquinariaListScreen extends Screen
             return;
         }
 
+        // $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
+
+        // $filePath = public_path("storage" . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension);
+
+        // if (!file_exists($filePath)) {
+        //     Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");
+        //     return;
+        // }
+
         $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
 
-        $filePath = public_path("storage" . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension);
+        $storageRelativePath = 'app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension;
+
+        $filePath = storage_path($storageRelativePath);
 
         if (!file_exists($filePath)) {
             Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");

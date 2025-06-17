@@ -31,7 +31,8 @@ class ZonasTrabajoApiController extends Controller
                     'descripcion' => $zona->descripcion,
                     'obra_id' => $zona->obra_id,
                     //'imagen_url' => asset('storage/' . $zona->imagen), // URL pública de la imagen
-                    'imagen_url' => asset('storage/' . str_replace('\\', '/', $zona->imagen)),
+                    //'imagen_url' => asset('storage/' . str_replace('\\', '/', $zona->imagen)),
+                    'imagen_url' => $zona->getImagenUrlAttribute(),
                 ];
             })
         ]);
@@ -48,7 +49,8 @@ class ZonasTrabajoApiController extends Controller
             'nombre' => $zona->nombre,
             'descripcion' => $zona->descripcion,
             'obra_id' => $zona->obra_id,
-            'imagen_url' => $zona->imagen_url, // URL de la imagen
+            //'imagen_url' => $zona->imagen_url, // URL de la imagen
+            'imagen_url' => $zona->getImagenUrlAttribute(),
         ]);
     }
 }

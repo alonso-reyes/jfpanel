@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('zonas_trabajo', function (Blueprint $table) {
             $table->id(); // Columna id auto-incremental
-            $table->string('clave', 50)->unique(); 
-            $table->string('nombre', 100); 
-            $table->string('descripcion', 255)->nullable(); 
-            $table->string('imagen')->nullable(); 
+            $table->string('clave', 50)->unique();
+            $table->string('nombre', 100);
+            $table->string('descripcion', 255)->nullable();
+            $table->string('imagen')->nullable();
+            $table->string('cloudinary_public_id')->nullable();
             $table->foreignId('obra_id')->constrained('obras')->onDelete('cascade');
             $table->timestamps();
         });

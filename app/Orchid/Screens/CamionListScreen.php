@@ -23,7 +23,7 @@ class CamionListScreen extends Screen
      */
     public function query(): iterable
     {
-        $obraId = session('obra_id'); 
+        $obraId = session('obra_id');
 
         return [
             'camiones' => Camion::where('obra_id', $obraId)->get()
@@ -49,10 +49,10 @@ class CamionListScreen extends Screen
     {
         return [
             ModalToggle::make('Importar desde Excel')
-                 ->icon('cloud-upload')
-                 ->method('excelImport')
-                 ->icon('full-screen')
-                 ->modal('importExcelModal'),
+                ->icon('cloud-upload')
+                ->method('excelImport')
+                ->icon('full-screen')
+                ->modal('importExcelModal'),
 
             Link::make('Agregar')
                 ->icon('plus')
@@ -74,7 +74,7 @@ class CamionListScreen extends Screen
                 ExcelImportLayout::class, // Reutilización del layout
             ])
                 ->title('Importar desde Excel')
-                ->applyButton('Importar'), 
+                ->applyButton('Importar'),
 
         ];
     }
@@ -88,66 +88,76 @@ class CamionListScreen extends Screen
     public function excelImport(Request $request)
     {
 
-    $obraId = session('obra_id');
+        $obraId = session('obra_id');
 
-    // Obtén el ID del archivo subido
-    $fileId = $request->input('excel_file.0'); 
-    $attachment = Attachment::find($fileId);
-    //dd($attachment);return;
-    if (!$attachment) {
-        Toast::error('El archivo no se pudo encontrar.');
-        return;
-    }
-
-    // El archivo no se encuentra en la ruta especificada: C:\xampp\htdocs\JFPanel\public\storage\2024/12/17/Libro1.xlsx
-    //El archivo no se encuentra en la ruta especificada: C:\xampp\htdocs\JFPanel\public\storage\2024\12\17\Libro1.xlsx
-    // El archivo no se encuentra en la ruta especificada: C:\xampp\htdocs\JFPanel\public\storage\2024\12\17\16228a43e6888159fc8202a9b8f158ecd9445880xlsx
-    $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
-
-    // Combina la ruta con el nombre del archivo
-    //$filePath = storage_path("app/public/{$attachment->path}{$attachment->name}");
-    $filePath = public_path("storage" . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension);
-    //$filePath = 'C:\xampp\htdocs\JFPanel\public\storage\2024\12\17\16228a43e6888159fc8202a9b8f158ecd9445880.xlsx'; <--- Estructura correcta
-
-
-    // Verifica si el archivo realmente existe
-    if (!file_exists($filePath)) {
-        Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");
-        return;
-    }
-
-    // Cargar el archivo Excel
-    $spreadsheet = IOFactory::load($filePath);
-    $sheet = $spreadsheet->getActiveSheet();
-    $rows = $sheet->toArray();
-
-    // Procesar las filas del archivo
-    foreach ($rows as $key => $row) {
-        if ($key == 0) continue; // Saltar encabezados
-        // Valida repetidos
-        $existingRecord = Camion::where('clave', $row[0])
-        ->where('obra_id', $obraId)  // Aseguramos que la obra_id también coincida
-        ->first();
-
-        // Si ya existe no se agrega
-        if ($existingRecord) {
-        continue;  // Saltar al siguiente registro
+        // Obtén el ID del archivo subido
+        $fileId = $request->input('excel_file.0');
+        $attachment = Attachment::find($fileId);
+        //dd($attachment);return;
+        if (!$attachment) {
+            Toast::error('El archivo no se pudo encontrar.');
+            return;
         }
 
-        Camion::create([
-            'clave' => $row[0],
-            'tipo' => $row[1],
-            'largo' => $row[2],
-            'ancho' => $row[3],
-            'altura' => $row[4],
-            'capacidad' => $row[5],
-            'inspeccion_mecanica' => $row[6],
-            'propietario' => $row[7],
-            'obra_id' => $obraId,
-        ]);
-    }
+        // El archivo no se encuentra en la ruta especificada: C:\xampp\htdocs\JFPanel\public\storage\2024/12/17/Libro1.xlsx
+        //El archivo no se encuentra en la ruta especificada: C:\xampp\htdocs\JFPanel\public\storage\2024\12\17\Libro1.xlsx
+        // El archivo no se encuentra en la ruta especificada: C:\xampp\htdocs\JFPanel\public\storage\2024\12\17\16228a43e6888159fc8202a9b8f158ecd9445880xlsx
+        //$fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
 
-    Toast::info('Datos importados correctamente.');
+        // Combina la ruta con el nombre del archivo
+        //$filePath = storage_path("app/public/{$attachment->path}{$attachment->name}");
+        //$filePath = public_path("storage" . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension);
+        //$filePath = 'C:\xampp\htdocs\JFPanel\public\storage\2024\12\17\16228a43e6888159fc8202a9b8f158ecd9445880.xlsx'; <--- Estructura correcta
 
+
+        // Verifica si el archivo realmente existe
+        // if (!file_exists($filePath)) {
+        //     Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");
+        //     return;
+        // }
+
+        $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
+
+        $storageRelativePath = 'app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension;
+
+        $filePath = storage_path($storageRelativePath);
+
+        if (!file_exists($filePath)) {
+            Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");
+            return;
+        }
+
+        // Cargar el archivo Excel
+        $spreadsheet = IOFactory::load($filePath);
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray();
+
+        // Procesar las filas del archivo
+        foreach ($rows as $key => $row) {
+            if ($key == 0) continue; // Saltar encabezados
+            // Valida repetidos
+            $existingRecord = Camion::where('clave', $row[0])
+                ->where('obra_id', $obraId)  // Aseguramos que la obra_id también coincida
+                ->first();
+
+            // Si ya existe no se agrega
+            if ($existingRecord) {
+                continue;  // Saltar al siguiente registro
+            }
+
+            Camion::create([
+                'clave' => $row[0],
+                'tipo' => $row[1],
+                'largo' => $row[2],
+                'ancho' => $row[3],
+                'altura' => $row[4],
+                'capacidad' => $row[5],
+                'inspeccion_mecanica' => $row[6],
+                'propietario' => $row[7],
+                'obra_id' => $obraId,
+            ]);
+        }
+
+        Toast::info('Datos importados correctamente.');
     }
 }
