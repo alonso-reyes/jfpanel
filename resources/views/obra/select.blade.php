@@ -26,47 +26,47 @@
 
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                 <!-- Lista de obras -->
-                 <table class="table-auto w-full text-left border-collapse">
+                <!-- Lista de obras -->
+                <table class="table-auto w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-gray-100">
+                        <tr class="bg-gray-800 text-white">
                             <th class="px-4 py-2 border-b border-gray-300">Clave</th>
                             <th class="px-4 py-2 border-b border-gray-300">Nombre</th>
                             <th class="px-4 py-2 border-b border-gray-300">No. contrato</th>
                             <th class="px-4 py-2 border-b border-gray-300">Ubicación</th>
                             <th class="px-4 py-2 border-b border-gray-300">Descripción</th>
-                            <th class="px-4 py-2 border-b border-gray-300 text-right"></th>
-                            <th class="px-4 py-2 border-b border-gray-300 text-right"></th>
+                            <th class="border-b border-gray-300"></th>
+                            <th class="border-b border-gray-300"></th>
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach($obras as $obra)
+                        @foreach($obras as $obra)
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-2 border-b border-gray-300">{{ $obra->clave }}</td>
                             <td class="px-4 py-2 border-b border-gray-300">{{ $obra->nombre }}</td>
                             <td class="px-4 py-2 border-b border-gray-300">{{ $obra->contrato }}</td>
                             <td class="px-4 py-2 border-b border-gray-300">{{ $obra->ubicacion }}</td>
                             <td class="px-4 py-2 border-b border-gray-300">{{ $obra->descripcion }}</td>
-                            <td class="px-4 py-2 border-b border-gray-300 text-right">
-                                <a href="{{ route('obra.edit', $obra->id) }}" class="text-gray-700 hover:text-black">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <td class="border-b border-gray-300 w-10">
+                                <a href="{{ route('obra.edit', $obra->id) }}" class="text-gray-700 hover:text-black inline-flex items-center justify-center w-full h-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-2.036L9 13l-1.5 4.5 4.5-1.5 6.536-6.536a2.5 2.5 0 10-3.536-3.536z" />
                                     </svg>
                                 </a>
                             </td>
-                            <td class="px-4 py-2 border-b border-gray-300 text-right">
-                                <form action="{{ route('obra.set') }}" method="POST">
+                            <td class="border-b border-gray-300 w-10">
+                                <form action="{{ route('obra.set') }}" method="POST" class="inline-flex items-center justify-center w-full h-full">
                                     @csrf
                                     <input type="hidden" name="obra_id" value="{{ $obra->id }}">
                                     <button type="submit" class="text-gray-700 hover:text-black">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                         </svg>
                                     </button>
                                 </form>
                             </td>
                         </tr>
-                    @endforeach
+                        @endforeach
                     </tbody>
                 </table>
             </div>

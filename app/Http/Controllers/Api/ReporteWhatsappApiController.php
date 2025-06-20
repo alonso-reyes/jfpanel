@@ -6,20 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ReporteJefeFrente;
 use Dompdf\Dompdf;
-use Dompdf\Options;
-use App\Models\AcarreoVolumen;
-use App\Models\AcarreoArea;
-use App\Models\AcarreoMetroLineal;
-use App\Models\AcarreoAgua;
-use App\Models\Horometro;
-use App\Models\ReporteFotografia;
-use App\Models\ReporteMaquinaria;
-use App\Models\ReportePersonal;
-use App\Models\ZonaTrabajoDibujo;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class ReporteWhatsappApiController extends Controller
 {
