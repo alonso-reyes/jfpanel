@@ -62,8 +62,11 @@ COPY <<EOF /etc/apache2/sites-available/000-default.conf
 </VirtualHost>
 EOF
 
+# Dar permisos de ejecución al script de inicio
+RUN chmod +x /var/www/html/start.sh
+
 # Exponer puerto 80
 EXPOSE 80
 
-# Comando de inicio
-CMD ["apache2-foreground"]
+# Comando de inicio usando el script
+CMD ["/var/www/html/start.sh"]
