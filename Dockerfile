@@ -51,22 +51,27 @@ COPY <<EOF /etc/apache2/sites-available/000-default.conf
 <VirtualHost *:80>
     ServerAdmin webmaster@localhost
     DocumentRoot /var/www/html/public
-    
+
     <Directory /var/www/html/public>
         AllowOverride All
         Require all granted
     </Directory>
-    
+
     ErrorLog \${APACHE_LOG_DIR}/error.log
     CustomLog \${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
 EOF
 
-# Dar permisos de ejecución al script de inicio
-RUN chmod +x /var/www/html/start.sh
-
 # Exponer puerto 80
 EXPOSE 80
 
-# Comando de inicio usando el script
-CMD ["/var/www/html/start.sh"]
+# Ejecutar migraciones y luego arrancar Apache en primer plano
+CMD bash -c "\
+    until php artisan migrate --force; do \
+    echo 'Esperando a que la base de datos esté lista...'; \
+    sleep 5; \
+    done && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    apache2-foreground"
