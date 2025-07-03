@@ -23,16 +23,18 @@ class AppServiceProvider extends ServiceProvider
     {
         if (app()->environment('production')) {
             // Configurar trusted proxies para Railway
-            $this->app['request']->setTrustedProxies(
-                ['*'],
-                \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
-                    \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
-                    \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
-                    \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
-            );
+            // $this->app['request']->setTrustedProxies(
+            //     ['*'],
+            //     \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+            //         \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+            //         \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
+            //         \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+            // );
 
-            URL::forceScheme('https');
-            URL::forceRootUrl(config('app.url'));
+            // URL::forceScheme('https');
+            // URL::forceRootUrl(config('app.url'));
+
+            $this->app['request']->server->set('HTTPS', 'on');
         }
         // if (env('APP_ENV') === 'production') {
         //     URL::forceScheme('https');
