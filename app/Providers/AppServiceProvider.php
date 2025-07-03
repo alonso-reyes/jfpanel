@@ -23,6 +23,15 @@ class AppServiceProvider extends ServiceProvider
     {
         if (app()->environment('production')) {
             URL::forceScheme('https');
+
+            // Configurar para Railway
+            if (request()->header('X-Forwarded-Proto') === 'https') {
+                request()->server->set('HTTPS', 'on');
+                request()->server->set('SERVER_PORT', 443);
+            }
+
+            // Forzar root URL
+            URL::forceRootUrl(env('APP_URL'));
         }
         // if (env('APP_ENV') === 'production') {
         //     URL::forceScheme('https');
