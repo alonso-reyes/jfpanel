@@ -87,22 +87,6 @@ class MaquinariaListScreen extends Screen
         $maquinaria->delete();
     }
 
-    public function importExcel(Request $request)
-    {
-        $obraId = session('obra_id');
-
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls',
-        ]);
-
-        Excel::import(new DynamicImport($obraId, Maquinaria::class, [
-            'title' => 0,
-            'description' => 1,
-        ]), $request->file('excel_file'));
-
-        Alert::info('Datos importados con éxito.');
-        return redirect()->route('platform.concepto.list');
-    }
 
     public function excelImport(Request $request)
     {
@@ -118,20 +102,12 @@ class MaquinariaListScreen extends Screen
             return;
         }
 
-        // $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
-
-        // $filePath = public_path("storage" . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension);
-
-        // if (!file_exists($filePath)) {
-        //     Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");
-        //     return;
-        // }
-
         $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
 
-        $storageRelativePath = 'app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension;
-
-        $filePath = storage_path($storageRelativePath);
+        // $storageRelativePath = 'app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension;
+        //$filePath = storage_path($storageRelativePath);
+        $diskPath = $attachment->path . $attachment->name . '.' . $fileExtension;
+        $filePath = Storage::disk('public')->path($diskPath);
 
         if (!file_exists($filePath)) {
             Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");
@@ -179,26 +155,6 @@ class MaquinariaListScreen extends Screen
                 'parcialidad_turno' => 0
             ]);
 
-            // if (!empty($row[2])) {
-            //     // Separar la cadena de tipos de maquinaria por comas
-            //     $maquinariaArray = explode(',', $row[2]);
-
-            //     foreach ($maquinariaArray as $tipo_maquinaria) {
-            //         // Limpiar espacios en blanco
-            //         $tipo_maquinaria = trim($tipo_maquinaria);
-
-            //         // Buscar el tipo de maquinaria en la base de datos
-            //         $tipoMaquinaria = TipoMaquinaria::where('nombre', $tipo_maquinaria)->first();
-
-            //         // Si el tipo de maquinaria existe, insertarlo en la tabla intermedia
-            //         if ($tipoMaquinaria) {
-            //             $maquinaria->tiposMaquinaria()->attach($tipoMaquinaria->id);
-            //         } else {
-            //             // Opcional: Puedes mostrar un mensaje si no se encuentra el tipo de maquinaria
-            //             Toast::warning("Tipo de maquinaria '{$tipo_maquinaria}' no encontrado.");
-            //         }
-            //     }
-            // }
         }
 
         Toast::info('Datos importados correctamente.');
