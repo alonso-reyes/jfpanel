@@ -8,6 +8,7 @@ use App\Models\Maquinaria;
 use App\Models\TipoMaquinaria;
 use App\Orchid\Layouts\ExcelImportLayout;
 use App\Orchid\Layouts\MaquinariaListLayout;
+use FFI\Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -91,13 +92,12 @@ class MaquinariaListScreen extends Screen
 
     public function excelImport(Request $request)
     {
-
         $obraId = session('obra_id');
 
         // Obtén el ID del archivo subido
         $fileId = $request->input('excel_file.0');
         $attachment = Attachment::find($fileId);
-        //dd($attachment);return;
+
         if (!$attachment) {
             Toast::error('El archivo no se pudo encontrar.');
             return;
@@ -105,58 +105,103 @@ class MaquinariaListScreen extends Screen
 
         $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
 
-        // $storageRelativePath = 'app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension;
-        //$filePath = storage_path($storageRelativePath);
-        $diskPath = $attachment->path . $attachment->name . '.' . $fileExtension;
-        $filePath = Storage::disk('public')->path($diskPath);
+        // Intentar múltiples rutas posibles
+        $possiblePaths = [
+            // Ruta usando Storage::disk('public')
+            Storage::disk('public')->path($attachment->path . $attachment->name . '.' . $fileExtension),
 
-        if (!file_exists($filePath)) {
-            Toast::error("El archivo no se encuentra en la ruta especificada: $filePath");
-            return;
+            // Ruta directa en storage/app/public
+            storage_path('app/public/' . $attachment->path . $attachment->name . '.' . $fileExtension),
+
+            // Ruta usando solo storage/app
+            storage_path('app/' . $attachment->path . $attachment->name . '.' . $fileExtension),
+        ];
+
+        $filePath = null;
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                $filePath = $path;
+                break;
+            }
         }
 
-        // Cargar el archivo Excel
-        $spreadsheet = IOFactory::load($filePath);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray();
+        // Si no encontramos el archivo, intentar usar el contenido directamente
+        if (!$filePath) {
+            // Verificar si podemos obtener el contenido usando Storage
+            try {
+                $diskPath = $attachment->path . $attachment->name . '.' . $fileExtension;
 
-        // Procesar las filas del archivo
-        foreach ($rows as $key => $row) {
-            if ($key == 0) continue; // Saltar encabezados
-            // Valida repetidos
-            $existing = Maquinaria::where('numero_economico', $row[0])
-                ->where('obra_id', $obraId)  // Aseguramos que la obra_id también coincida
-                ->first();
+                if (Storage::disk('public')->exists($diskPath)) {
+                    // Crear archivo temporal
+                    $tempPath = sys_get_temp_dir() . '/' . uniqid() . '.' . $fileExtension;
+                    $content = Storage::disk('public')->get($diskPath);
+                    file_put_contents($tempPath, $content);
+                    $filePath = $tempPath;
+                } else {
+                    Toast::error("El archivo no se encuentra disponible para procesamiento.");
+                    return;
+                }
+            } catch (Exception $e) {
+                Toast::error("Error al acceder al archivo: " . $e->getMessage());
+                return;
+            }
+        }
 
-            // Si ya existe otro operador con la misma clave_trabajador y obra_id, no lo agregamos
-            if ($existing) {
-                continue;  // Saltar al siguiente registro
+        try {
+            // Cargar el archivo Excel
+            $spreadsheet = IOFactory::load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            // Procesar las filas del archivo
+            foreach ($rows as $key => $row) {
+                if ($key == 0) continue; // Saltar encabezados
+
+                // Validar que la fila tenga datos suficientes
+                if (count($row) < 6) {
+                    continue; // Saltar filas incompletas
+                }
+
+                // Valida repetidos
+                $existing = Maquinaria::where('numero_economico', $row[0])
+                    ->where('obra_id', $obraId)
+                    ->first();
+
+                if ($existing) {
+                    continue;
+                }
+
+                $tipoMaquinaria = TipoMaquinaria::firstOrCreate(
+                    ['nombre' => $row[2], 'obra_id' => $obraId],
+                    ['acarreo_agua' => 0]
+                );
+
+                $maquinaria = Maquinaria::create([
+                    'numero_economico' => $row[0],
+                    'modelo' => $row[1],
+                    'tipo_maquinaria_id' => $tipoMaquinaria->id,
+                    'horometro_inicial' => $row[3],
+                    'estado' => $row[4],
+                    'inactividad' => $row[5],
+                    'obra_id' => $obraId,
+                ]);
+
+                Horometro::create([
+                    'maquinaria_id' => $maquinaria->id,
+                    'horometro_inicial' => $row[3],
+                    'horometro_final' => null,
+                    'parcialidad_turno' => 0
+                ]);
             }
 
-            //$tipoMaquinaria = TipoMaquinaria::where('nombre', $row[2])->first();
-            $tipoMaquinaria = TipoMaquinaria::firstOrCreate(
-                ['nombre' => $row[2], 'obra_id' => $obraId],
-                ['acarreo_agua' => 0] // Valor por defecto si no viene en el Excel
-            );
-
-            $maquinaria = Maquinaria::create([
-                'numero_economico' => $row[0],
-                'modelo' => $row[1],
-                'tipo_maquinaria_id' => $tipoMaquinaria->id,
-                'horometro_inicial' => $row[3],
-                'estado' => $row[4],
-                'inactividad' => $row[5],
-                'obra_id' => $obraId,
-            ]);
-
-            Horometro::create([
-                'maquinaria_id' => $maquinaria->id,
-                'horometro_inicial' => $row[3],
-                'horometro_final' => null,
-                'parcialidad_turno' => 0
-            ]);
+            Toast::info('Datos importados correctamente.');
+        } catch (Exception $e) {
+            Toast::error('Error al procesar el archivo: ' . $e->getMessage());
+        } finally {
+            // Limpiar archivo temporal si fue creado
+            if (isset($tempPath) && file_exists($tempPath)) {
+                unlink($tempPath);
+            }
         }
-
-        Toast::info('Datos importados correctamente.');
     }
 }
