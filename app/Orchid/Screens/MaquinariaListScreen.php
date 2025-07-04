@@ -95,128 +95,85 @@ class MaquinariaListScreen extends Screen
     {
         $obraId = session('obra_id');
 
-        // Validar que se haya subido un archivo
-        if (!$request->hasFile('excel_file')) {
-            Toast::error('No se ha seleccionado ningún archivo.');
+        // Orchid te da el ID del archivo
+        $fileId = $request->input('excel_file.0');
+        $attachment = Attachment::find($fileId);
+
+        if (!$attachment) {
+            Toast::error('El archivo no se pudo encontrar.');
             return;
         }
 
-        $file = $request->file('excel_file');
+        // Obtener extensión
+        $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
 
-        // Validar que sea un archivo Excel
-        $allowedExtensions = ['xlsx', 'xls', 'csv'];
-        $extension = strtolower($file->getClientOriginalExtension());
+        // Ruta dentro del disco 'public'
+        $relativePath = $attachment->path . $attachment->name . '.' . $fileExtension;
 
-        if (!in_array($extension, $allowedExtensions)) {
-            Toast::error('El archivo debe ser un Excel (.xlsx, .xls) o CSV.');
+        // Verificar si existe en el disco
+        if (!Storage::disk('public')->exists($relativePath)) {
+            Toast::error("El archivo no se encuentra en disco: $relativePath");
             return;
         }
 
-        // Validar el tamaño del archivo (opcional, por ejemplo 5MB máximo)
-        if ($file->getSize() > 5 * 1024 * 1024) {
-            Toast::error('El archivo es demasiado grande. Máximo 5MB.');
-            return;
-        }
+        // Copiar el archivo a una ruta temporal
+        $tempPath = sys_get_temp_dir() . '/' . uniqid('excel_', true) . '.' . $fileExtension;
+        $localFilePath = Storage::disk('public')->path($relativePath);
+        copy($localFilePath, $tempPath);
 
         try {
-            // Procesar directamente desde el archivo temporal
-            $spreadsheet = IOFactory::load($file->getRealPath());
+            // Leer el archivo Excel
+            $spreadsheet = IOFactory::load($tempPath);
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray();
 
-            $processed = 0;
-            $skipped = 0;
-            $errors = [];
-
             foreach ($rows as $key => $row) {
-                // Saltar encabezados
-                if ($key == 0) continue;
+                if ($key === 0) continue; // Encabezado
 
-                try {
-                    // Validar que la fila tenga datos suficientes
-                    if (count($row) < 6 || empty($row[0])) {
-                        $skipped++;
-                        continue;
-                    }
+                if (count($row) < 6 || empty($row[0])) continue;
 
-                    // Limpiar datos (remover espacios extra, etc.)
-                    $numeroEconomico = trim($row[0]);
-                    $modelo = trim($row[1]);
-                    $tipoMaquinariaNombre = trim($row[2]);
-                    $horometroInicial = is_numeric($row[3]) ? (float)$row[3] : 0;
-                    $estado = trim($row[4]);
-                    $inactividad = trim($row[5]);
+                // Verificar duplicado
+                $existing = Maquinaria::where('numero_economico', $row[0])
+                    ->where('obra_id', $obraId)
+                    ->first();
 
-                    // Validar datos requeridos
-                    if (empty($numeroEconomico) || empty($tipoMaquinariaNombre)) {
-                        $skipped++;
-                        continue;
-                    }
+                if ($existing) continue;
 
-                    // Validar repetidos
-                    $existing = Maquinaria::where('numero_economico', $numeroEconomico)
-                        ->where('obra_id', $obraId)
-                        ->first();
+                // Crear tipo maquinaria
+                $tipoMaquinaria = TipoMaquinaria::firstOrCreate(
+                    ['nombre' => $row[2], 'obra_id' => $obraId],
+                    ['acarreo_agua' => 0]
+                );
 
-                    if ($existing) {
-                        $skipped++;
-                        continue;
-                    }
+                // Crear maquinaria
+                $maquinaria = Maquinaria::create([
+                    'numero_economico' => $row[0],
+                    'modelo' => $row[1],
+                    'tipo_maquinaria_id' => $tipoMaquinaria->id,
+                    'horometro_inicial' => $row[3],
+                    'estado' => $row[4],
+                    'inactividad' => $row[5],
+                    'obra_id' => $obraId,
+                ]);
 
-                    // Crear o encontrar tipo de maquinaria
-                    $tipoMaquinaria = TipoMaquinaria::firstOrCreate(
-                        ['nombre' => $tipoMaquinariaNombre, 'obra_id' => $obraId],
-                        ['acarreo_agua' => 0]
-                    );
-
-                    // Crear maquinaria
-                    $maquinaria = Maquinaria::create([
-                        'numero_economico' => $numeroEconomico,
-                        'modelo' => $modelo,
-                        'tipo_maquinaria_id' => $tipoMaquinaria->id,
-                        'horometro_inicial' => $horometroInicial,
-                        'estado' => $estado,
-                        'inactividad' => $inactividad,
-                        'obra_id' => $obraId,
-                    ]);
-
-                    // Crear horómetro inicial
-                    Horometro::create([
-                        'maquinaria_id' => $maquinaria->id,
-                        'horometro_inicial' => $horometroInicial,
-                        'horometro_final' => null,
-                        'parcialidad_turno' => 0
-                    ]);
-
-                    $processed++;
-                } catch (Exception $e) {
-                    $errors[] = "Fila " . ($key + 1) . ": " . $e->getMessage();
-                    Log::error("Error procesando fila $key: " . $e->getMessage());
-                }
+                // Crear horómetro
+                Horometro::create([
+                    'maquinaria_id' => $maquinaria->id,
+                    'horometro_inicial' => $row[3],
+                    'horometro_final' => null,
+                    'parcialidad_turno' => 0,
+                ]);
             }
 
-            // Mostrar resultados
-            $message = "Importación completada. Procesados: $processed";
-            if ($skipped > 0) {
-                $message .= ", Omitidos: $skipped";
+            Toast::info('Datos importados correctamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al procesar Excel: ' . $e->getMessage());
+            Toast::error('Error al procesar el archivo.');
+        } finally {
+            // Borrar archivo temporal
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
             }
-            if (count($errors) > 0) {
-                $message .= ", Errores: " . count($errors);
-            }
-
-            if ($processed > 0) {
-                Toast::success($message);
-            } else {
-                Toast::warning('No se procesaron registros. ' . $message);
-            }
-
-            // Log errores si los hay
-            if (count($errors) > 0) {
-                Log::warning('Errores durante importación:', $errors);
-            }
-        } catch (Exception $e) {
-            Log::error('Error al procesar archivo Excel: ' . $e->getMessage());
-            Toast::error('Error al procesar el archivo: ' . $e->getMessage());
         }
     }
 }
