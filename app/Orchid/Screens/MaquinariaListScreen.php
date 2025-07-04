@@ -9,6 +9,7 @@ use App\Models\TipoMaquinaria;
 use App\Orchid\Layouts\ExcelImportLayout;
 use App\Orchid\Layouts\MaquinariaListLayout;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Orchid\Attachment\Models\Attachment;
 use Orchid\Screen\Actions\Link;
@@ -154,7 +155,6 @@ class MaquinariaListScreen extends Screen
                 'horometro_final' => null,
                 'parcialidad_turno' => 0
             ]);
-
         }
 
         Toast::info('Datos importados correctamente.');
