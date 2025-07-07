@@ -45,7 +45,7 @@ return new class extends Migration
             $table->decimal('horometro_inicial')->default(0);
             $table->decimal('horometro_final')->default(0);
             $table->enum('estado', ['activo', 'mantenimiento', 'inactivo'])->default('activo');
-            $table->enum('inactividad', ['mantenimiento', 'falta de operador', 'falta de tramo', 'condiciones climaticas'])->nullable();
+            $table->enum('inactividad', ['ninguna', 'mantenimiento', 'falta de operador', 'falta de tramo', 'condiciones climaticas'])->nullable();
             $table->text('observaciones_inactividad')->nullable();
             $table->text('observaciones')->nullable();
             $table->foreignId('obra_id')->constrained('obras')->onDelete('cascade');
