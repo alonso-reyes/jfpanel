@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('catalogo_camiones_acarreos', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
+            $table->decimal('capacidad', 10, 2);
+            $table->decimal('capacidad_tonelada', 10, 2);
             $table->foreignId('obra_id')->constrained('obras')->onDelete('cascade');
             $table->timestamps();
         });
