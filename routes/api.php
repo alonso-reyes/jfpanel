@@ -87,6 +87,12 @@ Route::post('/reporte_diario_whatsapp', [ReporteWhatsappApiController::class, 'r
 
 Route::post('/enviar_reporte_diario', [ReporteWhatsappApiController::class, 'reporteDiarioWhastappPDF'])->middleware('auth:sanctum');
 
+Route::get('/getFactorAbundamiento/{id}', function ($id) {
+    $concepto = Conceptos::findOrFail($id);
+    return response()->json([
+        'factor_abundamiento' => $concepto->factor_abundamiento,
+    ]);
+});
 
 
 // Route::post('/getTurnos', [TurnosApiController::class, 'getTurnos'])->middleware('auth:sanctum');

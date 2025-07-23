@@ -282,18 +282,26 @@
                     <th style="padding: 2px 4px;">Camión</th>
                     <th style="padding: 2px 4px;">Origen</th>
                     <th style="padding: 2px 4px;">Destino</th>
+                    <th style="padding: 2px 4px;">Capacidad</th>
+                    <th style="padding: 2px 4px;">Volumen suelto</th>
+                    <th style="padding: 2px 4px;">Concepto</th>
+                    <th style="padding: 2px 4px;">Volumen compactado</th>
                     <th style="padding: 2px 4px;">Observaciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($reporte->acarreosVolumen as $acarreo)
                 <tr>
-                    <td>{{ $acarreo->material->material ?? 'N/A' }}</td>
-                    <td>{{ $acarreo->materialUso->uso ?? 'N/A' }}</td>
+                    <td>{{ $acarreo->material->material ?? '' }}</td>
+                    <td>{{ $acarreo->materialUso->uso ?? '' }}</td>
                     <td>{{ $acarreo->viajes }}</td>
                     <td>{{ $acarreo->catalogo_camion->nombre }}</td>
-                    <td>{{ $acarreo->origen->origen ?? 'N/A' }}</td>
-                    <td>{{ $acarreo->destino->destino ?? 'N/A' }}</td>
+                    <td>{{ $acarreo->origen->origen ?? '' }}</td>
+                    <td>{{ $acarreo->destino->destino ?? '' }}</td>
+                    <td>{{ $acarreo->capacidad }}</td>
+                    <td>{{ $acarreo->volumen }}</td>
+                    <td>{{ $acarreo->concepto->nombre ?? '' }}</td>
+                    <td>{{ $acarreo->volumen_compactado }}</td>
                     <td>{{ $acarreo->observaciones }}</td>
                 </tr>
                 @endforeach
@@ -311,6 +319,7 @@
                     <th style="padding: 2px 4px;">Largo</th>
                     <th style="padding: 2px 4px;">Ancho</th>
                     <th style="padding: 2px 4px;">Área</th>
+                    <th style="padding: 2px 4px;">Concepto</th>
                     <th style="padding: 2px 4px;">Observaciones</th>
                 </tr>
             </thead>
@@ -320,6 +329,7 @@
                     <td>{{ $acarreo->largo }}</td>
                     <td>{{ $acarreo->ancho }}</td>
                     <td>{{ $acarreo->area }}</td>
+                    <td>{{ $acarreo->concepto->nombre ?? '' }}</td>
                     <td>{{ $acarreo->observaciones }}</td>
                 </tr>
                 @endforeach
@@ -335,6 +345,7 @@
             <thead>
                 <tr>
                     <th>Largo</th>
+                    <th>Concepto</th>
                     <th>Observaciones</th>
                 </tr>
             </thead>
@@ -342,6 +353,7 @@
                 @foreach($reporte->acarreosMetroLineal as $acarreo)
                 <tr>
                     <td>{{ $acarreo->largo }}</td>
+                    <td>{{ $acarreo->concepto->nombre ?? '' }}</td>
                     <td>{{ $acarreo->observaciones }}</td>
                 </tr>
                 @endforeach
@@ -357,9 +369,12 @@
             <thead>
                 <tr>
                     <th>No. económico</th>
-                    <th>Viajes</th>
                     <th>Origen</th>
                     <th>Destino</th>
+                    <th>Viajes</th>
+                    <th>Capacidad</th>
+                    <th>Volumen</th>
+                    <th>Concepto</th>
                     <th>Observaciones</th>
                 </tr>
             </thead>
@@ -367,9 +382,12 @@
                 @foreach($reporte->acarreosAgua as $acarreo)
                 <tr>
                     <td>{{ $acarreo->maquinaria->numero_economico }}</td>
-                    <td>{{ $acarreo->viajes }}</td>
                     <td>{{ $acarreo->origen->origen ?? 'N/A' }}</td>
                     <td>{{ $acarreo->destino->destino ?? 'N/A' }}</td>
+                    <td>{{ $acarreo->viajes }}</td>
+                    <td>{{ $acarreo->capacidad }}</td>
+                    <td>{{ $acarreo->volumen }}</td>
+                    <td>{{ $acarreo->concepto->nombre ?? '' }}</td>
                     <td>{{ $acarreo->observaciones }}</td>
                 </tr>
                 @endforeach

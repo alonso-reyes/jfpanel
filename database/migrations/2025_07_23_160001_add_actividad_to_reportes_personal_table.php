@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('catalogo_camiones_acarreos', function (Blueprint $table) {
-            $table->id();
-            $table->string('nombre');
-            $table->foreignId('obra_id')->constrained('obras')->onDelete('cascade');
-            $table->timestamps();
+        Schema::table('reportes_personal', function (Blueprint $table) {
+            $table->text('actividades')->nullable();
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('catalogo_camiones_acarreos');
+        Schema::table('reportes_personal', function (Blueprint $table) {
+            $table->dropColumn('actividades');
+        });
     }
 };

@@ -21,12 +21,21 @@ class AcarreoArea extends Model
         'largo',
         'ancho',
         'area',
+        'volumen_compactado',
         'observaciones',
+        'concepto_id',
+        'factor_abundamiento'
     ];
 
     // Relación con el modelo ReporteJefeFrente
     public function reporteFrente()
     {
         return $this->belongsTo(ReporteJefeFrente::class, 'reporte_frente_id');
+    }
+
+    // Relación con el modelo Conceptos
+    public function concepto()
+    {
+        return $this->belongsTo(Conceptos::class, 'concepto_id');
     }
 }

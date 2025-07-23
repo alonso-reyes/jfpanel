@@ -2,6 +2,7 @@
 
 namespace App\Orchid\Layouts;
 
+use App\Models\ReporteJefeFrente;
 use Orchid\Screen\Actions\Link;
 use Orchid\Screen\Layouts\Table;
 use Orchid\Screen\TD;
@@ -39,6 +40,11 @@ class ReporteListlayout extends Table
                     return 'N/A';
                 }),
 
+            TD::make('zonaTrabajo.nombre', 'Zona de Trabajo')
+                ->render(function ($reporte) {
+                    return $reporte->zonaTrabajo->nombre ?? 'N/A';
+                }),
+
             TD::make('turno.nombre_turno', 'Turno')
                 ->render(function ($reporte) {
                     // Verifica primero si la relación existe
@@ -60,46 +66,43 @@ class ReporteListlayout extends Table
                     return $reporte->hora_termino_real_actividades;
                 }),
 
-            TD::make('zonaTrabajo.nombre', 'Zona de Trabajo')
-                ->render(function ($reporte) {
-                    return $reporte->zonaTrabajo->nombre ?? 'N/A';
-                }),
 
-            TD::make('obra.nombre', 'Obra')
-                ->render(function ($reporte) {
-                    return $reporte->obra->nombre ?? 'N/A';
-                }),
 
-            TD::make('sobrestante', 'Sobrestante'),
+            // TD::make('obra.nombre', 'Obra')
+            //     ->render(function ($reporte) {
+            //         return $reporte->obra->nombre ?? 'N/A';
+            //     }),
 
-            TD::make('observaciones', 'Observaciones'),
+            // TD::make('sobrestante', 'Sobrestante'),
 
-            TD::make('acarreos_volumen', 'Acarreos Volumen')
-                ->render(function ($reporte) {
-                    return $reporte->acarreosVolumen->count();
-                }),
+            // TD::make('observaciones', 'Observaciones'),
 
-            TD::make('acarreos_area', 'Acarreos Área')
-                ->render(function ($reporte) {
-                    return $reporte->acarreosArea->count();
-                }),
+            // TD::make('acarreos_volumen', 'Acarreos Volumen')
+            //     ->render(function ($reporte) {
+            //         return $reporte->acarreosVolumen->count();
+            //     }),
 
-            TD::make('acarreos_metro_lineal', 'Acarreos Metro Lineal')
-                ->render(function ($reporte) {
-                    return $reporte->acarreosMetroLineal->count();
-                }),
+            // TD::make('acarreos_area', 'Acarreos Área')
+            //     ->render(function ($reporte) {
+            //         return $reporte->acarreosArea->count();
+            //     }),
 
-            TD::make('acarreos_agua', 'Acarreos Agua')
-                ->render(function ($reporte) {
-                    return $reporte->acarreosAgua->count();
-                }),
+            // TD::make('acarreos_metro_lineal', 'Acarreos Metro Lineal')
+            //     ->render(function ($reporte) {
+            //         return $reporte->acarreosMetroLineal->count();
+            //     }),
 
-            TD::make('fotografias', 'Fotografías')
-                ->render(function ($reporte) {
-                    return $reporte->fotografias->count();
-                }),
+            // TD::make('acarreos_agua', 'Acarreos Agua')
+            //     ->render(function ($reporte) {
+            //         return $reporte->acarreosAgua->count();
+            //     }),
 
-            TD::make('created_at', 'Creado')
+            // TD::make('fotografias', 'Fotografías')
+            //     ->render(function ($reporte) {
+            //         return $reporte->fotografias->count();
+            //     }),
+
+            TD::make('created_at', 'Fecha de creación')
                 ->sort()
                 ->render(function ($reporte) {
                     return $reporte->created_at->format('d/m/Y H:i');
@@ -107,10 +110,14 @@ class ReporteListlayout extends Table
 
             TD::make('actions', 'Acciones')
                 ->alignRight()
-                ->render(function ($reporte) {
+                ->render(function (ReporteJefeFrente $reporte) {
                     return '<div style="display: inline-flex; gap: 5px;">' .
                         Link::make('')
-                        ->icon('file-text')
+                        ->icon('pencil')
+                        ->route('platform.reportes.edit', $reporte)
+                        ->render() .
+                        Link::make('')
+                        ->icon('download')
                         ->route('platform.reporte.pdf', $reporte->id)
                         ->target('_blank')
                         ->render() .

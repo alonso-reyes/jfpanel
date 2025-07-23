@@ -22,6 +22,7 @@ class ReporteMaquinaria extends Model
         'operador_id',
         'horometro_inicial',
         'horometro_final',
+        'horas_efectivas'
     ];
 
     public function reporteFrente()

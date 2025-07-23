@@ -6,6 +6,7 @@ use App\Models\Conceptos;
 use Illuminate\Http\Request;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Fields\Input;
+use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Fields\TextArea;
 use Orchid\Screen\Screen;
 use Orchid\Support\Facades\Alert;
@@ -50,11 +51,11 @@ class ConceptoEditScreen extends Screen
             //     ->icon('pencil')
             //     ->method('createOrUpdate')
             //     ->canSee(!$this->concepto->exists),
-           
-                Button::make($exists ? 'Editar' : 'Agregar')
+
+            Button::make($exists ? 'Editar' : 'Agregar')
                 ->icon($exists ? 'pencil' : 'plus')
                 ->method('createOrUpdate')
-                //->canSee($this->concepto->exists),
+            //->canSee($this->concepto->exists),
 
             // Button::make('Eliminar')
             //     ->icon('trash')
@@ -72,22 +73,36 @@ class ConceptoEditScreen extends Screen
     {
         return [
             Layout::rows([
+                Select::make('concepto.tipo')
+                    ->title('Tipo de Concepto')
+                    ->options([
+                        'TITULO' => 'TÍTULO',
+                        'CAPITULO' => 'CAPÍTULO',
+                    ])
+                    ->required()
+                    ->empty('Selecciona una opción'),
+
                 Input::make('concepto.nombre')
                     ->title('Concepto'),
-                    //->placeholder('Concepto')
-                    //->help('Nombre del concepto'),
+                //->placeholder('Concepto')
+                //->help('Nombre del concepto'),
 
                 TextArea::make('concepto.descripcion')
                     ->title('Descripción')
                     ->rows(3)
                     ->maxlength(200),
-                    //->placeholder('Descripcion')
+                //->placeholder('Descripcion')
                 Input::make('concepto.unidad')
                     ->title('Unidad'),
-    
+
                 Input::make('concepto.cantidad')
                     ->type('number')
                     ->title('Cantidad')
+                    ->step(0.01),
+
+                Input::make('concepto.factor_abundamiento')
+                    ->type('number')
+                    ->title('Factor de abundamiento')
                     ->step(0.01)
             ])
         ];
@@ -95,7 +110,7 @@ class ConceptoEditScreen extends Screen
 
     public function createOrUpdate(Request $request)
     {
-        $obraId = session('obra_id'); 
+        $obraId = session('obra_id');
 
         if (!$obraId) {
             Alert::error('Error: No se ha seleccionado ninguna obra.');
@@ -109,9 +124,9 @@ class ConceptoEditScreen extends Screen
 
         // Verificar si ya existe otro operador con la misma clave_trabajador, pero que no sea el operador actual
         $repetead = Conceptos::where('nombre', $concepto_nombre)
-                                    ->where('obra_id', $obraId)
-                                    ->where('id', '!=', $concepto_id)  // Excluir el operador actual si estamos editando
-                                    ->first();
+            ->where('obra_id', $obraId)
+            ->where('id', '!=', $concepto_id)  // Excluir el operador actual si estamos editando
+            ->first();
 
         // Si ya existe otro operador con la misma clave_trabajador, mostramos un error
         if ($repetead) {
@@ -121,7 +136,7 @@ class ConceptoEditScreen extends Screen
         ///
         $this->concepto->fill([
             ...$request->get('concepto'),
-            'obra_id' => $obraId, 
+            'obra_id' => $obraId,
         ])->save();
 
         Alert::info('Concepto agregado con éxito');
