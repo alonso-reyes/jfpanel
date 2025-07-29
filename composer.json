@@ -21,7 +21,7 @@
         "livewire/volt": "^1.0",
         "maatwebsite/excel": "^1.1",
         "orchid/crud": "^4.3",
-        "orchid/platform": "^14.44",
+        "orchid/platform": "14.44",
         "phpoffice/phpspreadsheet": "^4.5"
     },
     "require-dev": {

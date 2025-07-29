@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b388f6f673a7c4b482aad4c595016b5b",
+    "content-hash": "9794702f79a0fc8c23d580992a364b24",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -484,87 +484,6 @@
                 }
             ],
             "time": "2024-11-12T16:29:46+00:00"
-        },
-        {
-            "name": "composer/semver",
-            "version": "3.4.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/composer/semver.git",
-                "reference": "4313d26ada5e0c4edfbd1dc481a92ff7bff91f12"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/composer/semver/zipball/4313d26ada5e0c4edfbd1dc481a92ff7bff91f12",
-                "reference": "4313d26ada5e0c4edfbd1dc481a92ff7bff91f12",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^5.3.2 || ^7.0 || ^8.0"
-            },
-            "require-dev": {
-                "phpstan/phpstan": "^1.11",
-                "symfony/phpunit-bridge": "^3 || ^7"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-main": "3.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Composer\\Semver\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Nils Adermann",
-                    "email": "naderman@naderman.de",
-                    "homepage": "http://www.naderman.de"
-                },
-                {
-                    "name": "Jordi Boggiano",
-                    "email": "j.boggiano@seld.be",
-                    "homepage": "http://seld.be"
-                },
-                {
-                    "name": "Rob Bast",
-                    "email": "rob.bast@gmail.com",
-                    "homepage": "http://robbast.nl"
-                }
-            ],
-            "description": "Semver library that offers utilities, version constraint parsing and validation.",
-            "keywords": [
-                "semantic",
-                "semver",
-                "validation",
-                "versioning"
-            ],
-            "support": {
-                "irc": "ircs://irc.libera.chat:6697/composer",
-                "issues": "https://github.com/composer/semver/issues",
-                "source": "https://github.com/composer/semver/tree/3.4.3"
-            },
-            "funding": [
-                {
-                    "url": "https://packagist.com",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/composer",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/composer/composer",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2024-09-19T14:15:21+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -4128,22 +4047,21 @@
         },
         {
             "name": "orchid/platform",
-            "version": "14.52.3",
+            "version": "14.44.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/orchidsoftware/platform.git",
-                "reference": "fb44463848c873afff757c86554ab8647b1127ab"
+                "reference": "94045233cfe355e9c6e97ecd6048c838ab6e8e33"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/orchidsoftware/platform/zipball/fb44463848c873afff757c86554ab8647b1127ab",
-                "reference": "fb44463848c873afff757c86554ab8647b1127ab",
+                "url": "https://api.github.com/repos/orchidsoftware/platform/zipball/94045233cfe355e9c6e97ecd6048c838ab6e8e33",
+                "reference": "94045233cfe355e9c6e97ecd6048c838ab6e8e33",
                 "shasum": ""
             },
             "require": {
                 "composer-runtime-api": "^2.2",
-                "composer/semver": "^3.0",
-                "laravel/framework": "^10.0 || ^11.0 || ^12.0",
+                "laravel/framework": "^10.0 || ^11.0",
                 "laravel/scout": "^9.0 || ^10.0",
                 "orchid/blade-icons": "^4.0",
                 "tabuna/breadcrumbs": "^4.0",
@@ -4151,17 +4069,17 @@
                 "watson/active": "^7.0"
             },
             "conflict": {
-                "laravel/framework": "<=10.48.25, <=11.34.0",
+                "laravel/framework": "<10.48.8",
                 "nesbot/carbon": "<2.66.0",
                 "orchestra/testbench-core": "<8.23.9"
             },
             "require-dev": {
                 "fakerphp/faker": "^1.9.1",
                 "laravel/pint": "^1.14",
-                "orchestra/testbench": "^8.0 || ^9.0 || ^10.0",
-                "orchestra/testbench-core": "^8.0 || ^9.0 || ^10.0",
-                "orchestra/testbench-dusk": "^8.0 || ^9.0 || ^10.0",
-                "phpunit/phpunit": "^10.0 || ^11.0 || ^12.0"
+                "orchestra/testbench": "^8.0 || ^9.0",
+                "orchestra/testbench-core": "^8.0 || ^9.0",
+                "orchestra/testbench-dusk": "^8.0 || ^9.0",
+                "phpunit/phpunit": "^10.0 || ^11.0"
             },
             "suggest": {
                 "orchid/crud": "Automated CRUD based on your files resources.",
@@ -4231,7 +4149,7 @@
                     "type": "opencollective"
                 }
             ],
-            "time": "2025-07-07T08:31:44+00:00"
+            "time": "2024-11-23T02:32:30+00:00"
         },
         {
             "name": "phpoffice/phpexcel",
