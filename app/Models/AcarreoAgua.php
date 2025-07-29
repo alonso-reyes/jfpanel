@@ -21,7 +21,11 @@ class AcarreoAgua extends Model
         'origen_id',
         'destino_id',
         'viajes',
+        'capacidad',
+        'volumen',
+        'volumen_compactado',
         'observaciones',
+        'concepto_id'
     ];
 
     // Relación con el modelo ReporteJefeFrente
@@ -46,5 +50,11 @@ class AcarreoAgua extends Model
     public function destino()
     {
         return $this->belongsTo(Destino::class);
+    }
+
+    // Relación con el modelo Conceptos
+    public function concepto()
+    {
+        return $this->belongsTo(Conceptos::class, 'concepto_id');
     }
 }

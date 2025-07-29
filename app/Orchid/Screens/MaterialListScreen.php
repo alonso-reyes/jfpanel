@@ -26,7 +26,7 @@ class MaterialListScreen extends Screen
         $obraId = session('obra_id');
 
         return [
-            'materiales' => Material::where('obra_id', $obraId)->get()
+            'materiales' => Material::where('obra_id', $obraId)->orderBy('material')->get()
         ];
     }
 

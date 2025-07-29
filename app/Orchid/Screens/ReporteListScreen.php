@@ -4,6 +4,7 @@ namespace App\Orchid\Screens;
 
 use App\Models\ReporteJefeFrente;
 use App\Orchid\Layouts\ReporteListlayout;
+use Orchid\Screen\Actions\Link;
 use Orchid\Screen\Screen;
 
 class ReporteListScreen extends Screen
@@ -50,9 +51,9 @@ class ReporteListScreen extends Screen
     public function commandBar(): iterable
     {
         return [
-            // Link::make('Agregar')
-            //     ->icon('plus')
-            //     ->route('platform.puesto.edit')
+            Link::make('Exportar a excel')
+                ->icon('cloud-download')
+                ->route('exportar.acarreos', ['obraId' => session('obra_id')])
         ];
     }
 

@@ -17,6 +17,7 @@ class ReportePersonal extends Model
     protected $fillable = [
         'reporte_frente_id',
         'personal_id',
+        'actividades'
     ];
 
     public function reporteFrente()

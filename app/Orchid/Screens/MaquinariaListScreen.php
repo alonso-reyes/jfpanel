@@ -33,7 +33,7 @@ class MaquinariaListScreen extends Screen
     {
         $obraId = session('obra_id');
         return [
-            'maquinarias' => Maquinaria::where('obra_id', $obraId)->get()
+            'maquinarias' => Maquinaria::where('obra_id', $obraId)->orderBy('numero_economico')->get()
         ];
     }
 

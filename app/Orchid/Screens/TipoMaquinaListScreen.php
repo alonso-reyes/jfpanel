@@ -19,7 +19,7 @@ class TipoMaquinaListScreen extends Screen
         $obraId = session('obra_id');
 
         return [
-            'tipos_maquinaria' => TipoMaquinaria::where('obra_id', $obraId)->get()
+            'tipos_maquinaria' => TipoMaquinaria::where('obra_id', $obraId)->orderBy('nombre')->get()
         ];
     }
 

@@ -27,7 +27,7 @@ class PersonalListScreen extends Screen
         $obraId = session('obra_id');
 
         return [
-            'personales' => Personal::where('obra_id', $obraId)->get()
+            'personales' => Personal::where('obra_id', $obraId)->orderBy('nombre')->get()
         ];
     }
 

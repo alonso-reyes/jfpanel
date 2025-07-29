@@ -26,7 +26,7 @@ class UsoMaterialListScreen extends Screen
         $obraId = session('obra_id');
 
         return [
-            'usos' => MaterialUso::where('obra_id', $obraId)->get()
+            'usos' => MaterialUso::where('obra_id', $obraId)->orderBy('uso')->get()
         ];
     }
 

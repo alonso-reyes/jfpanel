@@ -68,7 +68,7 @@ class AcarreosAguaApiController extends Controller
                     'numero_economico'       => $pipa->numero_economico,
                     'modelo'                 => $pipa->modelo,
                     'tipo'                   => $pipa->tipo_nombre,
-                    'capacidad'              => $pipa->capacidad,
+                    'capacidad'       => (float) $pipa->capacidad, // <- AQUÍ
                     'estado'                 => $pipa->estado,
                     'inactividad'            => $pipa->inactividad,
                 ];

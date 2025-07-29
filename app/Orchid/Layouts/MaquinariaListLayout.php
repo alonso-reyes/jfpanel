@@ -32,7 +32,7 @@ class MaquinariaListLayout extends Table
             TD::make('modelo', 'Modelo'),
             TD::make('horometro_inicial', 'Horometro inicial'),
             TD::make('estado', 'Estado'),
-            TD::make('inactividad', 'Inactividad'),
+            TD::make('inactividad', 'Motivo de inactividad'),
             // TD::make('observaciones_inactividad', 'Observaciones de inactividad'),
             // TD::make('observaciones', 'Observaciones'),
             TD::make('')

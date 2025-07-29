@@ -13,6 +13,7 @@ use App\Models\Horometro;
 use App\Models\ReporteFotografia;
 use App\Models\ReporteMaquinaria;
 use App\Models\ReportePersonal;
+use App\Models\UsuariosJefeFrente;
 use App\Models\ZonaTrabajoDibujo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -55,6 +56,9 @@ class ReporteJefeFrenteApiController extends Controller
         // Obtener los datos de la solicitud
         $data = $request->all();
 
+        $usuario = UsuariosJefeFrente::find($data['data']['usuario_id']);
+        $nombreUsuario = $usuario ? $usuario->nombre : 'Desconocido';
+
         // Convertir el formato de tiempo
         $horaInicio = Carbon::createFromFormat('h:i A', $data['data']['turno']['hora_real_entrada'])->format('H:i:s');
         $horaTermino = Carbon::createFromFormat('h:i A', $data['data']['turno']['hora_real_salida'])->format('H:i:s');
@@ -66,8 +70,8 @@ class ReporteJefeFrenteApiController extends Controller
             'hora_inicio_real_actividades' => $horaInicio, // Formato HH:MM:SS
             'hora_termino_real_actividades' => $horaTermino, // Formato HH:MM:SS
             'zona_trabajo_id' => $data['data']['zona_trabajo']['id'],
-            'observaciones' => $data['data']['generales']['observaciones'],
-            'sobrestante' => $data['data']['generales']['sobrestante'],
+            'observaciones' => $data['data']['observaciones'],
+            'sobrestante' => $nombreUsuario,
             'obra_id' => $data['obra_id'],
         ]);
 
@@ -164,6 +168,8 @@ class ReporteJefeFrenteApiController extends Controller
                     'origen_id' => $acarreoAgua['origen']['id'],
                     'destino_id' => $acarreoAgua['destino']['id'],
                     'viajes' => $acarreoAgua['viajes'],
+                    'capacidad' => $acarreoAgua['capacidad'],
+                    'volumen' => $acarreoAgua['volumen'],
                     'observaciones' => $acarreoAgua['observaciones'],
                 ]);
             }
@@ -173,11 +179,13 @@ class ReporteJefeFrenteApiController extends Controller
             foreach ($data['data']['maquinaria'] as $maquinaria) {
                 $reporteMaquinas = ReporteMaquinaria::create([
                     'reporte_frente_id' => $reporte->id,
-                    'concepto_id' => $maquinaria['concepto']['id'],
+                    //'concepto_id' => $maquinaria['concepto']['id'],
                     'tipo_maquinaria_id' => $maquinaria['familia']['id'],
                     'maquinaria_id' => $maquinaria['maquinaria']['id'],
                     'operador_id' => $maquinaria['operador']['id'],
                     'observaciones' => $maquinaria['observaciones'],
+                    'actividad' => $maquinaria['actividad'],
+                    'motivo_inactividad_id' => $maquinaria['id_motivo_inactividad'],
                     'horometro_inicial' => $maquinaria['horometro']['horometro_inicial'],
                     'horometro_final' => $maquinaria['horometro']['horometro_final'],
                 ]);
@@ -205,6 +213,7 @@ class ReporteJefeFrenteApiController extends Controller
                 ReportePersonal::create([
                     'reporte_frente_id' => $reporte->id,
                     'personal_id' => $persona['personal']['id'],
+                    'actividades' => $persona['personal']['actividad']
                 ]);
             }
             //Log::info('Personal creado:', $reporteMaquinas->toArray());

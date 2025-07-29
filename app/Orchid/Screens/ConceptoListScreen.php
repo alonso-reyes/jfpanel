@@ -30,9 +30,32 @@ class ConceptoListScreen extends Screen
     {
         $obraId = session('obra_id');
 
+        // return [
+        //     //'conceptos' => Conceptos::paginate()
+        //     'conceptos' => Conceptos::where('obra_id', $obraId)->get()
+        // ];
+
+        $conceptos = Conceptos::where('obra_id', $obraId)->get();
+
+        // Orden jerárquico por nombre
+        $ordenado = $conceptos->sort(function ($a, $b) {
+            $a_parts = explode('.', $a->nombre);
+            $b_parts = explode('.', $b->nombre);
+
+            foreach (range(0, max(count($a_parts), count($b_parts))) as $i) {
+                $a_val = (int)($a_parts[$i] ?? -1);
+                $b_val = (int)($b_parts[$i] ?? -1);
+
+                if ($a_val !== $b_val) {
+                    return $a_val <=> $b_val;
+                }
+            }
+
+            return 0;
+        });
+
         return [
-            //'conceptos' => Conceptos::paginate()
-            'conceptos' => Conceptos::where('obra_id', $obraId)->get()
+            'conceptos' => $ordenado->values(), // importante para reindexar
         ];
     }
 

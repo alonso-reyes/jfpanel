@@ -22,6 +22,8 @@ class ReporteMaquinaria extends Model
         'operador_id',
         'horometro_inicial',
         'horometro_final',
+        'motivo_inactividad_id',
+        'horas_efectivas'
     ];
 
     public function reporteFrente()
@@ -47,5 +49,10 @@ class ReporteMaquinaria extends Model
     public function operador()
     {
         return $this->belongsTo(Operador::class, 'operador_id');
+    }
+
+    public function motivo_inactividad()
+    {
+        return $this->belongsTo(MotivoInactividad::class, 'motivo_inactividad_id');
     }
 }

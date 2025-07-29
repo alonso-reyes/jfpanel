@@ -17,6 +17,9 @@ class CatalogoCamionAcarreo extends Model
     protected $fillable = [
         'nombre',
         'obra_id',
+        'unidad_medida',
+        'capacidad',
+        'capacidad_tonelada'
     ];
 
     /**

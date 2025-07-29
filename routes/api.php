@@ -5,7 +5,10 @@ use App\Http\Controllers\Api\AcarreosVolumenApiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CamionesApiController;
 use App\Http\Controllers\Api\CatalogoCamionesApiController;
+use App\Http\Controllers\Api\CatalogoMotivosInactividadMaquinariaApiController;
 use App\Http\Controllers\Api\ConceptosApiController;
+use App\Http\Controllers\Api\ExportApiController;
+use App\Http\Controllers\Api\ExportarAcarreosApiController;
 use App\Http\Controllers\Api\GeneralesApiController;
 use App\Http\Controllers\Api\MaterialApiController;
 use App\Http\Controllers\Api\ObraApiController;
@@ -68,6 +71,8 @@ Route::post('/getCamiones', [CamionesApiController::class, 'get_camiones'])->mid
 
 Route::post('/getCatalogoCamionesAcarreo', [CatalogoCamionesApiController::class, 'get_catalogo_camiones_volumen'])->middleware('auth:sanctum');
 
+Route::post('/getCatalogoMotivosInactividadMaquinaria', [CatalogoMotivosInactividadMaquinariaApiController::class, 'get_cat_motivos_inactividad'])->middleware('auth:sanctum');
+
 Route::post('/getCatalogosVolumen', [AcarreosVolumenApiController::class, 'get_catalogos_volumen'])->middleware('auth:sanctum');
 
 Route::post('/getPipas', [AcarreosAguaApiController::class, 'get_pipas'])->middleware('auth:sanctum');
@@ -86,6 +91,15 @@ Route::post('/guardar_reporte', [ReporteJefeFrenteApiController::class, 'guardar
 Route::post('/reporte_diario_whatsapp', [ReporteWhatsappApiController::class, 'reporteDiarioWhastapp'])->middleware('auth:sanctum');
 
 Route::post('/enviar_reporte_diario', [ReporteWhatsappApiController::class, 'reporteDiarioWhastappPDF'])->middleware('auth:sanctum');
+
+Route::get('/getFactorAbundamiento/{id}', function ($id) {
+    $concepto = Conceptos::findOrFail($id);
+    return response()->json([
+        'factor_abundamiento' => $concepto->factor_abundamiento,
+    ]);
+});
+
+Route::get('exportar-acarreos/{obraId}', [ExportarAcarreosApiController::class, 'exportar'])->name('exportar.acarreos');
 
 
 

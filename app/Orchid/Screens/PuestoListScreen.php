@@ -26,7 +26,7 @@ class PuestoListScreen extends Screen
         $obraId = session('obra_id');
 
         return [
-            'puestos' => Puesto::where('obra_id', $obraId)->get()
+            'puestos' => Puesto::where('obra_id', $obraId)->orderBy('puesto')->get()
         ];
     }
 

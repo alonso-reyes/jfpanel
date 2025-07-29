@@ -26,7 +26,10 @@ class AcarreoVolumen extends Model
         'viajes',
         'capacidad',
         'volumen',
+        'volumen_compactado',
         'observaciones',
+        'concepto_id',
+        'factor_abundamiento'
     ];
 
     // Relación con el modelo ReporteJefeFrente
@@ -45,6 +48,12 @@ class AcarreoVolumen extends Model
     public function materialUso()
     {
         return $this->belongsTo(MaterialUso::class, 'material_uso_id');
+    }
+
+    // Relación con el modelo Conceptos
+    public function concepto()
+    {
+        return $this->belongsTo(Conceptos::class, 'concepto_id');
     }
 
     // Relación con el modelo Origen

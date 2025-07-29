@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 use App\Http\Controllers\ObraController;
 use App\Http\Controllers\ReportePdfController;
+use App\Models\AcarreoArea;
 use App\Models\Maquinaria;
 use App\Orchid\Layouts\PostListLayout;
 use App\Orchid\Layouts\PuestoListLayout;
+use App\Orchid\Screens\AcarreoAguaEditScreen;
+use App\Orchid\Screens\AcarreoAreaEditScreen;
+use App\Orchid\Screens\AcarreoMetroLinealEditScreen;
+use App\Orchid\Screens\AcarreoVolumenEditScreen;
 use App\Orchid\Screens\CamionEditScreen;
 use App\Orchid\Screens\CamionListScreen;
 use App\Orchid\Screens\ConceptoEditScreen;
@@ -53,6 +58,7 @@ use App\Orchid\Screens\PersonalEditScreen;
 use App\Orchid\Screens\PersonalListScreen;
 use App\Orchid\Screens\PuestoEditScreen;
 use App\Orchid\Screens\PuestoListScreen;
+use App\Orchid\Screens\ReporteEditScreen;
 use App\Orchid\Screens\ReporteListScreen;
 use App\Orchid\Screens\UsoMaterialEditScreen;
 use App\Orchid\Screens\UsoMaterialListScreen;
@@ -210,6 +216,15 @@ Route::screen('personal/{personal?}', PersonalEditScreen::class)->name('platform
 
 //////Reporte
 Route::screen('reportes', ReporteListScreen::class)->name('platform.reportes.list');
+Route::screen('reporte/{reporte?}', ReporteEditScreen::class)->name('platform.reportes.edit');
+
+///Acarreos
+Route::screen('acarreovolumen/{acarreovolumen?}', AcarreoVolumenEditScreen::class)->name('platform.acarreovolumen.edit');
+Route::screen('acarreoarea/{acarreoarea?}', AcarreoAreaEditScreen::class)->name('platform.acarreoarea.edit');
+Route::screen('acarreometro/{acarreometrolineal?}', AcarreoMetroLinealEditScreen::class)->name('platform.acarreometrolineal.edit');
+Route::screen('acarreoagua/{acarreoagua?}', AcarreoAguaEditScreen::class)->name('platform.acarreoagua.edit');
+
+
 Route::get('reportes/pdf/{reporte}', [ReportePdfController::class, 'generate'])->name('platform.reporte.pdf');
 
 // Route::screen('posts', PostListLayout::class)

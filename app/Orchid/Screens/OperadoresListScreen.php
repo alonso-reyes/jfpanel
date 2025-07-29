@@ -30,7 +30,7 @@ class OperadoresListScreen extends Screen
         $obraId = session('obra_id');
         return [
             //'operadores' => Operador::paginate()
-            'operadores' => Operador::where('obra_id', $obraId)->get()
+            'operadores' => Operador::where('obra_id', $obraId)->orderBy('nombre')->get()
         ];
     }
 
