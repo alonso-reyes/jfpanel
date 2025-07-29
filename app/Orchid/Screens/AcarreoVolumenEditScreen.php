@@ -113,7 +113,7 @@ class AcarreoVolumenEditScreen extends Screen
             return redirect()->route('obra.select');
         }
 
-        $id = $this->acarreovolumen->id ?? null;  // Si es un registro existente, obtenemos su ID
+        $id = $this->acarreovolumen->reporte_frente_id ?? null;  // Si es un registro existente, obtenemos su ID
 
         $this->acarreovolumen->fill([
             ...$request->get('acarreovolumen'),

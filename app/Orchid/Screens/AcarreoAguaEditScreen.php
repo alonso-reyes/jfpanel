@@ -114,7 +114,7 @@ class AcarreoAguaEditScreen extends Screen
             return redirect()->route('obra.select');
         }
 
-        $id = $this->acarreoagua->id ?? null;  // Si es un registro existente, obtenemos su ID
+        $id = $this->acarreoagua->reporte_frente_id ?? null;  // Si es un registro existente, obtenemos su ID
 
         $this->acarreoagua->fill([
             ...$request->get('acarreoagua'),

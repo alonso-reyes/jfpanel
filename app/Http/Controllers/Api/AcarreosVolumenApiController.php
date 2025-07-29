@@ -68,7 +68,10 @@ class AcarreosVolumenApiController extends Controller
         $tipos_camion = CatalogoCamionAcarreo::where('obra_id', $obraId)->get()->map(function ($tipos_camion) {
             return [
                 'id'                    => $tipos_camion->id,
-                'nombre'                 => $tipos_camion->nombre,
+                'nombre'                => $tipos_camion->nombre,
+                'unidad_medida'         => $tipos_camion->unidad_medida,
+                'capacidad'             => $tipos_camion->capacidad,
+                'capacidad_tonelada'    => $tipos_camion->capacidad_tonelada,
             ];
         });
 

@@ -114,7 +114,7 @@ class AcarreoAreaEditScreen extends Screen
             return redirect()->route('obra.select');
         }
 
-        $id = $this->acarreoarea->id ?? null;  // Si es un registro existente, obtenemos su ID
+        $id = $this->acarreoarea->reporte_frente_id ?? null;  // Si es un registro existente, obtenemos su ID
 
         $this->acarreoarea->fill([
             ...$request->get('acarreoarea'),

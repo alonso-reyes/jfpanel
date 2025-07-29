@@ -59,11 +59,11 @@ class AcarreoVolumenListLayout extends Table
                         Link::make('')
                         ->icon('pencil')
                         ->route('platform.acarreovolumen.edit', $acarreovolumen)
-                        ->render() .
+                        ->render()/* .
                         Button::make('')
                         ->icon('trash')
                         ->confirm('¿Desea eliminar este registro?')
-                        ->method('delete', ['acarreovolumen' => $acarreovolumen->id])
+                        ->method('delete', ['acarreovolumen' => $acarreovolumen->id])*/
                         . '</div>';
                 }),
         ];

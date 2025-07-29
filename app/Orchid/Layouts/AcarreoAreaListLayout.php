@@ -55,12 +55,12 @@ class AcarreoAreaListLayout extends Table
                         Link::make('')
                         ->icon('pencil')
                         ->route('platform.acarreoarea.edit', $acarreoarea)
-                        ->render() .
+                        ->render() ./*
                         Button::make('')
                         ->icon('trash')
                         ->confirm('¿Desea eliminar este registro?')
                         ->method('delete', ['acarreoarea' => $acarreoarea->id])
-                        . '</div>';
+                        . */ '</div>';
                 }),
         ];
     }

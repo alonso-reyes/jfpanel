@@ -57,12 +57,12 @@ class AcarreoMetroLinealListLayout extends Table
                         Link::make('')
                         ->icon('pencil')
                         ->route('platform.acarreometrolineal.edit', $acarreometrolineal)
-                        ->render() .
+                        ->render() ./*
                         Button::make('')
                         ->icon('trash')
                         ->confirm('¿Desea eliminar este registro?')
                         ->method('delete', ['acarreometrolineal' => $acarreometrolineal->id])
-                        . '</div>';
+                        . */ '</div>';
                 }),
         ];
     }

@@ -59,12 +59,12 @@ class AcarreoAguaListLayout extends Table
                         Link::make('')
                         ->icon('pencil')
                         ->route('platform.acarreoagua.edit', $acarreoagua)
-                        ->render() .
+                        ->render() ./*
                         Button::make('')
                         ->icon('trash')
                         ->confirm('¿Desea eliminar este registro?')
                         ->method('delete', ['acarreoagua' => $acarreoagua->id])
-                        . '</div>';
+                        . */ '</div>';
                 }),
         ];
     }

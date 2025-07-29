@@ -113,7 +113,7 @@ class AcarreoMetroLinealEditScreen extends Screen
             return redirect()->route('obra.select');
         }
 
-        $id = $this->acarreometrolineal->id ?? null;  // Si es un registro existente, obtenemos su ID
+        $id = $this->acarreometrolineal->reporte_frente_id ?? null;  // Si es un registro existente, obtenemos su ID
 
         $this->acarreometrolineal->fill([
             ...$request->get('acarreometrolineal'),
@@ -123,5 +123,14 @@ class AcarreoMetroLinealEditScreen extends Screen
         Alert::info('Registro actualizado con éxito');
 
         return redirect()->route('platform.reportes.edit', ['reporte' => $id]);
+    }
+
+    public function remove()
+    {
+        $this->acarreometrolineal->delete();
+
+        Alert::info('Registro eliminado');
+
+        return redirect()->route('platform.reportes.list');
     }
 }

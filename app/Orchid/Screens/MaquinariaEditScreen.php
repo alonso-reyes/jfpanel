@@ -2,6 +2,7 @@
 
 namespace App\Orchid\Screens;
 
+use App\Models\Horometro;
 use App\Models\Maquinaria;
 use App\Models\TipoMaquinaria;
 use Illuminate\Http\Request;
@@ -146,6 +147,20 @@ class MaquinariaEditScreen extends Screen
             ...$request->get('maquinaria'),
             'obra_id' => $obraId,
         ])->save();
+
+        // Agregar primer horometro a la tabla
+        // Obtenemos el ID actualizado o nuevo
+        $maquinariaId = $this->maquinaria->id;
+
+        // Si no existe un horómetro registrado para esta maquinaria, lo creamos
+        $horometroExistente = \App\Models\Horometro::where('maquinaria_id', $maquinariaId)->first();
+
+        if (!$horometroExistente) {
+            Horometro::create([
+                'maquinaria_id' => $maquinariaId,
+                'horometro_inicial' => $request->input('maquinaria.horometro_inicial'), // Asegúrate que este valor venga en el request
+            ]);
+        }
 
         Alert::info('Actualizado con éxito');
 

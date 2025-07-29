@@ -26,7 +26,7 @@ class DestinoListScreen extends Screen
         $obraId = session('obra_id');
 
         return [
-            'destinos' => Destino::where('obra_id', $obraId)->get()
+            'destinos' => Destino::where('obra_id', $obraId)->orderBy('destino')->get()
         ];
     }
 

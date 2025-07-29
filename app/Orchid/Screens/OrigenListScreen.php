@@ -26,7 +26,7 @@ class OrigenListScreen extends Screen
         $obraId = session('obra_id');
 
         return [
-            'origenes' => Origen::where('obra_id', $obraId)->get()
+            'origenes' => Origen::where('obra_id', $obraId)->orderBy('origen')->get()
         ];
     }
 
