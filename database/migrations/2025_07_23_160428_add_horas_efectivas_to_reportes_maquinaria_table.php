@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('reportes_maquinaria', function (Blueprint $table) {
             $table->decimal('horas_efectivas')->nullable()->after('horometro_final');
-            $table->text('actividad')->nullable()->after('motivo_inactividad');
+            $table->text('actividad')->nullable()->after('motivo_inactividad_id');
         });
     }
 
