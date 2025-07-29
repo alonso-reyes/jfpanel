@@ -51,7 +51,7 @@ class ReporteListScreen extends Screen
     public function commandBar(): iterable
     {
         return [
-            Link::make('Exportar total de volumenes')
+            Link::make('Exportar a excel')
                 ->icon('cloud-download')
                 ->route('exportar.acarreos', ['obraId' => session('obra_id')])
         ];

@@ -27,6 +27,7 @@ class ExportarAcarreosApiController extends Controller
         $tipos = ['acarreos_volumen' => 'Volumen'];
         $datos = [];
 
+        // === HOJA 1: Volumen Total por Concepto ===
         foreach ($tipos as $tabla => $etiqueta) {
             $resultados = DB::table($tabla)
                 ->join('reportes_jefe_frente', "$tabla.reporte_frente_id", '=', 'reportes_jefe_frente.id')
@@ -51,7 +52,7 @@ class ExportarAcarreosApiController extends Controller
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Resumen de Acarreos');
+        $sheet->setTitle('Resumen de Volumen por Concepto');
 
         // Encabezados
         $sheet->setCellValue('A1', 'Concepto');
@@ -94,6 +95,46 @@ class ExportarAcarreosApiController extends Controller
             $sheet2->setCellValue("B{$row}", $mat->total);
             $row++;
         }
+
+
+        // === HOJA 3: Numero Total de viajes por Tipo de Camion ===
+        $datos_tipo_camion = [];
+        // Crear hoja 3 y poner encabezados
+        $sheet3 = $spreadsheet->createSheet();
+        $sheet3->setTitle('Resumen de viajes por camión');
+
+        foreach ($tipos as $tabla => $etiqueta) {
+            $resultados = DB::table("$tabla as a")
+                ->join('reportes_jefe_frente as rjf', 'a.reporte_frente_id', '=', 'rjf.id')
+                ->join('catalogo_camiones_acarreos as cca', 'a.camion_id', '=', 'cca.id')
+                ->select(
+                    'cca.nombre as tipo_camion',
+                    DB::raw('SUM(a.viajes) as total_viajes'),
+                    DB::raw("'$etiqueta' as tipo")
+                )
+                ->where('rjf.obra_id', $obraId)
+                ->groupBy('cca.nombre')
+                ->get();
+
+            foreach ($resultados as $r) {
+                $datos_tipo_camion[] = [
+                    'tipo_camion' => $r->tipo_camion ?? 'Desconocido',
+                    'total_viajes' => $r->total_viajes,
+                ];
+            }
+        }
+
+        $sheet3->setCellValue('A1', 'Tipo de camión');
+        $sheet3->setCellValue('B1', 'Total de viajes');
+
+        // Insertar datos
+        $row = 2;
+        foreach ($datos_tipo_camion as $dato) {
+            $sheet3->setCellValue("A{$row}", $dato['tipo_camion']);
+            $sheet3->setCellValue("B{$row}", $dato['total_viajes']);
+            $row++;
+        }
+
 
 
         // // === GRAFICO DE BARRAS ===
