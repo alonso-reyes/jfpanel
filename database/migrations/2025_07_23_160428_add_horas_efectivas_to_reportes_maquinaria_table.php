@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('reportes_maquinaria', function (Blueprint $table) {
-            $table->decimal('horas_efectivas')->nullable()->after('horometro_final');
+            // $table->decimal('horas_efectivas')->nullable()->after('horometro_final');
             $table->text('actividad')->nullable()->after('motivo_inactividad_id');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('reportes_maquinaria', function (Blueprint $table) {
-            $table->dropColumn('horas_efectivas');
+            // $table->dropColumn('horas_efectivas');
             $table->dropColumn('actividad');
         });
     }
