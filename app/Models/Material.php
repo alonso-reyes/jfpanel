@@ -17,6 +17,7 @@ class Material extends Model
 
     protected $fillable = [
         'material',
+        'factor_abundamiento',
         'obra_id'
     ];
 }

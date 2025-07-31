@@ -58,16 +58,16 @@ class ConceptoListLayout extends Table
     {
         return [
 
-            TD::make('nombre', 'Concepto')
+            TD::make('nombre', 'Clave')
                 ->render(function (Conceptos $concepto) {
                     $profundidad = substr_count($concepto->nombre, '.');
                     $espacios = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $profundidad);
 
-                    $contenido = $concepto->tipo === 'TITULO'
+                    $contenido = $concepto->tipo === 'SUBCAPITULO'
                         ? "<strong style='color:#1d4ed8'>{$concepto->nombre}</strong>"
                         : e($concepto->nombre);
 
-                    if ($concepto->tipo === 'TITULO') {
+                    if ($concepto->tipo === 'SUBCAPITULO') {
                         return "<div padding: 10px; border-radius: 6px;'>{$espacios}{$contenido}</div>";
                     }
 
@@ -77,22 +77,22 @@ class ConceptoListLayout extends Table
 
             TD::make('descripcion', 'Descripción')
                 ->render(function (Conceptos $concepto) {
-                    return $concepto->tipo === 'TITULO'
+                    return $concepto->tipo === 'SUBCAPITULO'
                         ? "<span style='font-weight: bold; color: #1e293b;'>{$concepto->descripcion}</span>"
                         : e($concepto->descripcion);
                 }),
 
-            // Ocultar estas columnas si es tipo TITULO
+            // Ocultar estas columnas si es tipo SUBCAPITULO
             TD::make('unidad', 'Unidad')
                 ->render(
                     fn(Conceptos $concepto) =>
-                    $concepto->tipo === 'TITULO' ? '' : e($concepto->unidad)
+                    $concepto->tipo === 'SUBCAPITULO' ? '' : e($concepto->unidad)
                 ),
 
             TD::make('cantidad', 'Cantidad')
                 ->render(
                     fn(Conceptos $concepto) =>
-                    $concepto->tipo === 'TITULO' ? '' : number_format($concepto->cantidad, 2)
+                    $concepto->tipo === 'SUBCAPITULO' ? '' : number_format($concepto->cantidad, 2)
                 ),
 
             TD::make('')

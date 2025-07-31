@@ -23,6 +23,7 @@ class Maquinaria extends Model
         'horometro_inicial',
         'estado',
         'inactividad',
+        'motivo_inactividad_id',
         'observaciones_inactividad',
         'observaciones',
         'obra_id'
@@ -60,6 +61,11 @@ class Maquinaria extends Model
     public function ultimoHorometro()
     {
         return $this->hasOne(Horometro::class)->latestOfMany();
+    }
+
+    public function motivoInactividad()
+    {
+        return $this->belongsTo(MotivoInactividad::class, 'motivo_inactividad_id');
     }
 
     // Luego puedes acceder así:
