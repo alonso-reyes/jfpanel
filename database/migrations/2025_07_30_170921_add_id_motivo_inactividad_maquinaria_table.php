@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Limpiar los valores actuales de la columna estado
-        DB::statement("UPDATE maquinarias SET estado = NULL");
+        DB::statement("UPDATE maquinarias SET estado = ACTIVO");
 
         // 2. Modificar el enum con los nuevos valores
         DB::statement("ALTER TABLE maquinarias MODIFY estado ENUM('ACTIVO', 'INACTIVO') NULL");
