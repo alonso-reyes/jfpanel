@@ -13,10 +13,10 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Limpiar los valores actuales de la columna estado
-        DB::statement("UPDATE maquinarias SET estado = ACTIVO");
+        // DB::statement("UPDATE maquinarias SET estado = ACTIVO");
 
-        // 2. Modificar el enum con los nuevos valores
-        DB::statement("ALTER TABLE maquinarias MODIFY estado ENUM('ACTIVO', 'INACTIVO') NULL");
+        // // 2. Modificar el enum con los nuevos valores
+        // DB::statement("ALTER TABLE maquinarias MODIFY estado ENUM('ACTIVO', 'INACTIVO') NULL");
 
         Schema::table('maquinarias', function (Blueprint $table) {
             $table->unsignedBigInteger('motivo_inactividad_id')->nullable()->after('estado');
