@@ -2,7 +2,7 @@
 
 namespace App\Orchid\Screens;
 
-use App\Models\Material;
+use App\Models\MotivoInactividad;
 use Illuminate\Http\Request;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Fields\Input;
@@ -10,19 +10,18 @@ use Orchid\Screen\Screen;
 use Orchid\Support\Facades\Alert;
 use Orchid\Support\Facades\Layout;
 
-class MaterialEditScreen extends Screen
+class MotivosInactividadMaquinariaEditScreen extends Screen
 {
-    public $material;
-
+    public $motivo_inactividad;
     /**
      * Fetch data to be displayed on the screen.
      *
      * @return array
      */
-    public function query(Material $material): iterable
+    public function query(MotivoInactividad $motivo_inactividad): iterable
     {
         return [
-            'material' => $material
+            'motivo_inactividad' => $motivo_inactividad
         ];
     }
 
@@ -33,7 +32,7 @@ class MaterialEditScreen extends Screen
      */
     public function name(): ?string
     {
-        return $this->material->exists ? 'Editar' : 'Agregar';
+        return $this->motivo_inactividad->exists ? 'Editar' : 'Agregar';
     }
 
     /**
@@ -43,7 +42,7 @@ class MaterialEditScreen extends Screen
      */
     public function commandBar(): iterable
     {
-        $exists = $this->material->exists ? true : false;
+        $exists = $this->motivo_inactividad->exists ? true : false;
 
         return [
             Button::make($exists ? 'Editar' : 'Agregar')
@@ -61,14 +60,9 @@ class MaterialEditScreen extends Screen
     {
         return [
             Layout::rows([
-                Input::make('material.material')
-                    ->title('Material')
+                Input::make('motivo_inactividad.motivo_inactividad')
+                    ->title('Motivo de inactividad')
                     ->required(),
-
-                Input::make('material.factor_abundamiento')
-                    ->type('number')
-                    ->title('Factor de abundamiento')
-                    ->step(0.01)
             ])
         ];
     }
@@ -78,19 +72,19 @@ class MaterialEditScreen extends Screen
         $obraId = session('obra_id');
 
         if (!$obraId) {
-            Alert::error('Error: No se ha seleccionado ningun material.');
-            return redirect()->route('platform.material.list');
+            Alert::error('Error: No se ha seleccionado ningun registro.');
+            return redirect()->route('platform.motivo.inactividad.list');
         }
 
         //$this->turno->fill($request->get('turno'))->save();
-        $this->material->fill([
-            ...$request->get('material'),
+        $this->motivo_inactividad->fill([
+            ...$request->get('motivo_inactividad'),
             'obra_id' => $obraId,
         ])->save();
 
-        Alert::info('Material agregado con éxito');
+        Alert::info('Registro agregado con éxito');
 
-        return redirect()->route('platform.material.list');
+        return redirect()->route('platform.motivo.inactividad.list');
     }
 
     /**
@@ -98,10 +92,10 @@ class MaterialEditScreen extends Screen
      */
     public function remove()
     {
-        $this->material->delete();
+        $this->motivo_inactividad->delete();
 
-        Alert::info('Material eliminado');
+        Alert::info('Registro eliminado');
 
-        return redirect()->route('platform.material.list');
+        return redirect()->route('platform.motivo.inactividad.list');
     }
 }

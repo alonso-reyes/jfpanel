@@ -76,8 +76,8 @@ class ConceptoEditScreen extends Screen
                 Select::make('concepto.tipo')
                     ->title('Tipo de Concepto')
                     ->options([
-                        'TITULO' => 'TÍTULO',
-                        'CAPITULO' => 'CAPÍTULO',
+                        'SUBCAPITULO' => 'SUBCAPITULO',
+                        'CONCEPTO' => 'CONCEPTO',
                     ])
                     ->required()
                     ->empty('Selecciona una opción'),

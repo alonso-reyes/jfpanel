@@ -2,7 +2,7 @@
 
 namespace App\Orchid\Screens;
 
-use App\Models\Material;
+use App\Models\CatalogoCamionAcarreo;
 use Illuminate\Http\Request;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Fields\Input;
@@ -10,19 +10,18 @@ use Orchid\Screen\Screen;
 use Orchid\Support\Facades\Alert;
 use Orchid\Support\Facades\Layout;
 
-class MaterialEditScreen extends Screen
+class TiposCamionEditScreen extends Screen
 {
-    public $material;
-
+    public $tipo_camion;
     /**
      * Fetch data to be displayed on the screen.
      *
      * @return array
      */
-    public function query(Material $material): iterable
+    public function query(CatalogoCamionAcarreo $tipo_camion): iterable
     {
         return [
-            'material' => $material
+            'tipo_camion' => $tipo_camion
         ];
     }
 
@@ -33,7 +32,7 @@ class MaterialEditScreen extends Screen
      */
     public function name(): ?string
     {
-        return $this->material->exists ? 'Editar' : 'Agregar';
+        return $this->tipo_camion->exists ? 'Editar' : 'Agregar';
     }
 
     /**
@@ -43,7 +42,7 @@ class MaterialEditScreen extends Screen
      */
     public function commandBar(): iterable
     {
-        $exists = $this->material->exists ? true : false;
+        $exists = $this->tipo_camion->exists ? true : false;
 
         return [
             Button::make($exists ? 'Editar' : 'Agregar')
@@ -61,14 +60,19 @@ class MaterialEditScreen extends Screen
     {
         return [
             Layout::rows([
-                Input::make('material.material')
-                    ->title('Material')
+                Input::make('tipo_camion.nombre')
+                    ->title('Tipo de camion')
                     ->required(),
 
-                Input::make('material.factor_abundamiento')
+                Input::make('tipo_camion.capacidad')
                     ->type('number')
-                    ->title('Factor de abundamiento')
-                    ->step(0.01)
+                    ->title('Capacidad (Mts3)')
+                    ->step(0.01),
+
+                Input::make('tipo_camion.capacidad_tonelada')
+                    ->type('number')
+                    ->title('Cantidad (Toneladas)')
+                    ->step(0.01),
             ])
         ];
     }
@@ -78,19 +82,19 @@ class MaterialEditScreen extends Screen
         $obraId = session('obra_id');
 
         if (!$obraId) {
-            Alert::error('Error: No se ha seleccionado ningun material.');
-            return redirect()->route('platform.material.list');
+            Alert::error('Error: No se ha seleccionado ningun tipo_camion.');
+            return redirect()->route('platform.tipo.camion.list');
         }
 
         //$this->turno->fill($request->get('turno'))->save();
-        $this->material->fill([
-            ...$request->get('material'),
+        $this->tipo_camion->fill([
+            ...$request->get('tipo_camion'),
             'obra_id' => $obraId,
         ])->save();
 
-        Alert::info('Material agregado con éxito');
+        Alert::info('Registro agregado con éxito');
 
-        return redirect()->route('platform.material.list');
+        return redirect()->route('platform.tipo.camion.list');
     }
 
     /**
@@ -98,10 +102,10 @@ class MaterialEditScreen extends Screen
      */
     public function remove()
     {
-        $this->material->delete();
+        $this->tipo_camion->delete();
 
-        Alert::info('Material eliminado');
+        Alert::info('tipo_camion eliminado');
 
-        return redirect()->route('platform.material.list');
+        return redirect()->route('platform.tipo.camion.list');
     }
 }

@@ -31,6 +31,8 @@ use App\Orchid\Screens\MaquinariaEditScreen;
 use App\Orchid\Screens\MaquinariaListScreen;
 use App\Orchid\Screens\MaterialEditScreen;
 use App\Orchid\Screens\MaterialListScreen;
+use App\Orchid\Screens\MotivosInactividadMaquinariaEditScreen;
+use App\Orchid\Screens\MotivosInactividadMaquinariaListScreen;
 use App\Orchid\Screens\ObraCreateEditScreen;
 use App\Orchid\Screens\OperadoresEditScreen;
 use App\Orchid\Screens\OperadoresListScreen;
@@ -60,6 +62,8 @@ use App\Orchid\Screens\PuestoEditScreen;
 use App\Orchid\Screens\PuestoListScreen;
 use App\Orchid\Screens\ReporteEditScreen;
 use App\Orchid\Screens\ReporteListScreen;
+use App\Orchid\Screens\TiposCamionEditScreen;
+use App\Orchid\Screens\TiposCamionListScreen;
 use App\Orchid\Screens\UsoMaterialEditScreen;
 use App\Orchid\Screens\UsoMaterialListScreen;
 use App\Orchid\Screens\UsuariosJefesFrenteEditScreen;
@@ -208,15 +212,24 @@ Route::screen('destino/{destino?}', DestinoEditScreen::class)->name('platform.de
 Route::screen('camiones', CamionListScreen::class)->name('platform.camion.list');
 Route::screen('camion/{camion?}', CamionEditScreen::class)->name('platform.camion.edit');
 
+Route::screen('tipos_camion', TiposCamionListScreen::class)->name('platform.tipo.camion.list');
+Route::screen('tipo_camion/{tipo_camion?}', TiposCamionEditScreen::class)->name('platform.tipo.camion.edit');
+
 Route::screen('puestos', PuestoListScreen::class)->name('platform.puesto.list');
 Route::screen('puesto/{puesto?}', PuestoEditScreen::class)->name('platform.puesto.edit');
 
 Route::screen('personales', PersonalListScreen::class)->name('platform.personal.list');
 Route::screen('personal/{personal?}', PersonalEditScreen::class)->name('platform.personal.edit');
 
-//////Reporte
+Route::screen('motivos_inactividad', MotivosInactividadMaquinariaListScreen::class)->name('platform.motivo.inactividad.list');
+Route::screen('motivo_inactividad/{motivo_inactividad?}', MotivosInactividadMaquinariaEditScreen::class)->name('platform.motivo.inactividad.edit');
+
+//////Reportes
 Route::screen('reportes', ReporteListScreen::class)->name('platform.reportes.list');
 Route::screen('reporte/{reporte?}', ReporteEditScreen::class)->name('platform.reportes.edit');
+
+Route::screen('reportes_maquinaria', ReporteListScreen::class)->name('platform.reportes.maquinaria.list');
+Route::screen('reporte_maquinaria/{reporte_maquinaria?}', ReporteEditScreen::class)->name('platform.reportes.maquinaria.edit');
 
 ///Acarreos
 Route::screen('acarreovolumen/{acarreovolumen?}', AcarreoVolumenEditScreen::class)->name('platform.acarreovolumen.edit');

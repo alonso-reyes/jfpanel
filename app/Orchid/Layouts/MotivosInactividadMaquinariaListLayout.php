@@ -2,13 +2,13 @@
 
 namespace App\Orchid\Layouts;
 
-use App\Models\Material;
+use App\Models\MotivoInactividad;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Actions\Link;
 use Orchid\Screen\Layouts\Table;
 use Orchid\Screen\TD;
 
-class MaterialListLayout extends Table
+class MotivosInactividadMaquinariaListLayout extends Table
 {
     /**
      * Data source.
@@ -18,7 +18,7 @@ class MaterialListLayout extends Table
      *
      * @var string
      */
-    protected $target = 'materiales';
+    protected $target = 'motivos_inactividad';
 
     /**
      * Get the table cells to be displayed.
@@ -28,22 +28,21 @@ class MaterialListLayout extends Table
     protected function columns(): iterable
     {
         return [
-            TD::make('material', 'Material'),
-            TD::make('factor_abundamiento', 'Factor de abundamiento'),
+            TD::make('motivo_inactividad', 'Motivos de inactividad'),
 
             TD::make('')
                 ->alignRight()
-                ->render(function (Material $material) {
+                ->render(function (MotivoInactividad $motivo_inactividad) {
                     return
                         '<div style="display: inline-flex; gap: 5px;">' .
                         Link::make('')
                         ->icon('pencil')
-                        ->route('platform.material.edit', $material)
+                        ->route('platform.motivo.inactividad.edit', $motivo_inactividad)
                         ->render() .
                         Button::make('')
                         ->icon('trash')
-                        ->confirm('¿Desea eliminar este material?')
-                        ->method('delete', ['material' => $material->id])
+                        ->confirm('¿Desea eliminar este registro?')
+                        ->method('delete', ['motivo_inactividad' => $motivo_inactividad->id])
                         .
                         '</div>';
                 }),

@@ -55,4 +55,12 @@ class ReporteMaquinaria extends Model
     {
         return $this->belongsTo(MotivoInactividad::class, 'motivo_inactividad_id');
     }
+
+    // En ReporteMaquinaria.php
+    public function scopeByObra($query, $obraId)
+    {
+        return $query->whereHas('reporteFrente', function ($q) use ($obraId) {
+            $q->where('obra_id', $obraId);
+        });
+    }
 }

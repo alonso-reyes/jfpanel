@@ -4,9 +4,11 @@ namespace App\Orchid\Screens;
 
 use App\Models\Horometro;
 use App\Models\Maquinaria;
+use App\Models\MotivoInactividad;
 use App\Models\TipoMaquinaria;
 use Illuminate\Http\Request;
 use Orchid\Screen\Actions\Button;
+use Orchid\Screen\Fields\CheckBox;
 use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Screen;
@@ -90,30 +92,47 @@ class MaquinariaEditScreen extends Screen
                     ->type('number')
                     ->step(0.01),
 
-                Select::make('maquinaria.estado')  // Campo para el enum
-                    ->title('Estado de la máquina')  // Título del campo
-                    ->options([
-                        '' => 'Seleccione',
-                        'activo' => 'Activa',
-                        'inactivo' => 'Inactiva',
-                    ])  // Opciones del enum
-                    ->value($this->maquinaria->estado ?? 'activo') // Valor por defecto o el actual
-                    ->required()
-                    ->id('estado-select'), // Agrega un ID al select
+                // Select::make('maquinaria.estado')
+                //     ->title('Estado de la máquina')
+                //     ->options([
+                //         '' => 'Seleccione',
+                //         'activo' => 'Activa',
+                //         'inactivo' => 'Inactiva',
+                //     ])
+                //     ->value($this->maquinaria->estado ?? 'activo')
+                //     ->required()
+                //     ->id('estado-select'),
 
-                Select::make('maquinaria.inactividad')  // Campo para el enum
-                    ->title('Motivo de inactividad')  // Título del campo
-                    ->options([
-                        'ninguna' => 'Ninguna',
-                        'mantenimiento' => 'En mantenimiento',
-                        'falta de operador' => 'Falta de operador',
-                        'falta de tramo' => 'Falta de tramo',
-                        'condiciones climaticas' => 'Condiciones climáticas',
-                    ])  // Opciones del enum
-                    ->value($this->maquinaria->inactividad ?? 'ninguna') // Valor por defecto o el actual
-                    //->disabled()
-                    ->id('inactividad-select') // Agrega un ID al select
-            ])
+                CheckBox::make('maquinaria.estado')
+                    ->sendTrueOrFalse()
+                    ->title('¿Está inactiva la máquina?')
+                    ->placeholder('Marcar si la máquina está inactiva')
+                    ->value(1)
+                    ->checked(isset($this->maquinaria) && $this->maquinaria->estado === 'INACTIVO')
+                    ->id('estado-inactivo-checkbox'),
+
+                // Select::make('maquinaria.inactividad')  // Campo para el enum
+                //     ->title('Motivo de inactividad')  // Título del campo
+                //     ->options([
+                //         'ninguna' => 'Ninguna',
+                //         'mantenimiento' => 'En mantenimiento',
+                //         'falta de operador' => 'Falta de operador',
+                //         'falta de tramo' => 'Falta de tramo',
+                //         'condiciones climaticas' => 'Condiciones climáticas',
+                //     ])  // Opciones del enum
+                //     ->value($this->maquinaria->inactividad ?? 'ninguna') // Valor por defecto o el actual
+                //     //->disabled()
+                //     ->id('inactividad-select'), // Agrega un ID al select
+
+                Select::make('maquinaria.motivo_inactividad_id')
+                    ->title('Motivo de inactividad')
+                    ->options($this->getMotivosInactividad())
+                    ->value($this->maquinaria->motivo_inactividad_id ?? null)
+                    ->empty('Seleccione...')
+                    ->id('motivo-select-wrapper')
+            ]),
+
+            Layout::view('screens.maquinaria-js'),
         ];
     }
 
@@ -143,8 +162,17 @@ class MaquinariaEditScreen extends Screen
 
         // Si no hay duplicado, se guarda o actualiza el operador
         //$this->operador->fill($request->get('operador'))->save();
+        $inactiva = filter_var($request->input('maquinaria.estado'), FILTER_VALIDATE_BOOLEAN);
+        $estado = $inactiva ? 'INACTIVO' : 'ACTIVO';
+
+        $motivoInactividadId = $inactiva
+            ? $request->input('maquinaria.motivo_inactividad_id')
+            : null;
+
         $this->maquinaria->fill([
             ...$request->get('maquinaria'),
+            'estado' => $estado,
+            'motivo_inactividad_id' => $motivoInactividadId,
             'obra_id' => $obraId,
         ])->save();
 
@@ -192,6 +220,19 @@ class MaquinariaEditScreen extends Screen
         // Filtrar tipos de maquinaria por obra_id
         return TipoMaquinaria::where('obra_id', $obraId)
             ->pluck('nombre', 'id') // Obtener un array ['id' => 'nombre']
+            ->toArray();
+    }
+
+    public function getMotivosInactividad()
+    {
+        $obraId = session('obra_id');
+
+        if (!$obraId) {
+            return [];
+        }
+
+        return MotivoInactividad::where('obra_id', $obraId)
+            ->pluck('motivo_inactividad', 'id')
             ->toArray();
     }
 }

@@ -73,12 +73,20 @@ class PlatformProvider extends OrchidServiceProvider
 
                     Menu::make('Equipos')
                         ->icon('bs.truck-flatbed')
-                        ->route('platform.maquinaria.list')
+                        ->route('platform.maquinaria.list'),
+
+                    Menu::make('Catálogo de motivos de inactividad')
+                        ->icon('bs.exclamation-triangle')
+                        ->route('platform.motivo.inactividad.list'),
                 ]),
 
-            Menu::make('Camiones')
+            // Menu::make('Camiones')
+            //     ->icon('bs.truck-flatbed')
+            //     ->route('platform.camion.list'),
+
+            Menu::make('Tipos de camión')
                 ->icon('bs.truck-flatbed')
-                ->route('platform.camion.list'),
+                ->route('platform.tipo.camion.list'),
 
             Menu::make('Jefes de frente')
                 ->icon('bs.person-plus')

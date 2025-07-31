@@ -40,21 +40,29 @@ class OperadoresListLayout extends Table
         ];
 
         // Columnas dinámicas para los tipos de maquinaria
-        $maquinariaColumns = array_map(function ($tipoMaquinaria) {
-            return TD::make($tipoMaquinaria, $tipoMaquinaria)
-                ->render(function (Operador $operador) use ($tipoMaquinaria) {
-                    // Verificar si el operador tiene asociado este tipo de maquinaria
-                    $tieneMaquinaria = $operador
-                        ->tiposMaquinaria()
-                        ->where('nombre', $tipoMaquinaria)
-                        ->exists();
+        // $maquinariaColumns = array_map(function ($tipoMaquinaria) {
+        //     return TD::make($tipoMaquinaria, $tipoMaquinaria)
+        //         ->render(function (Operador $operador) use ($tipoMaquinaria) {
+        //             $tieneMaquinaria = $operador
+        //                 ->tiposMaquinaria()
+        //                 ->where('nombre', $tipoMaquinaria)
+        //                 ->exists();
 
-                    return $tieneMaquinaria
-                        ? 'X'
-                        : '';
-                })
-                ->alignCenter();
-        }, $tiposMaquinaria);
+        //             return $tieneMaquinaria
+        //                 ? 'X'
+        //                 : '';
+        //         })
+        //         ->alignCenter();
+        // }, $tiposMaquinaria);
+
+        $maquinariaColumns = [
+            TD::make('tipos_maquinaria', 'Tipos de maquinaria que puede operar')
+                ->render(function (Operador $operador) {
+                    return $operador->tiposMaquinaria
+                        ->pluck('nombre')
+                        ->implode(', ') ?: '—';
+                }),
+        ];
 
         // Botones de acción
         $actionColumn = [
