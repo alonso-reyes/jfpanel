@@ -29,6 +29,8 @@ class TiposCamionListLayout extends Table
     {
         return [
             TD::make('nombre', 'Tipo de camión'),
+            TD::make('capacidad', 'Capacidad (m³)'),
+            TD::make('capacidad_tonelada', 'Capacidad (Tonelada)'),
 
             TD::make('')
                 ->alignRight()

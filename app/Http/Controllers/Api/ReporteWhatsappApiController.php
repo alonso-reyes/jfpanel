@@ -141,8 +141,12 @@ class ReporteWhatsappApiController extends Controller
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
+        return response($dompdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="reporte_' . $obraId . '_' . $fecha . '.pdf"');
+
         // Guardar el archivo PDF
-        $output = $dompdf->output();
+        /*$output = $dompdf->output();
         $fileName = "reporte_" . $obraId . "_" . $fecha . ".pdf";
         $filePath = storage_path('app/public/reportes/' . $fileName);
         file_put_contents($filePath, $output);
@@ -156,7 +160,7 @@ class ReporteWhatsappApiController extends Controller
             'data' => [
                 'pdf_url' => $pdfUrl,
             ],
-        ]);
+        ]);*/
     }
 
     private function renderizarReporteHTML2($resumen)

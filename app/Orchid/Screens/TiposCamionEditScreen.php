@@ -66,7 +66,7 @@ class TiposCamionEditScreen extends Screen
 
                 Input::make('tipo_camion.capacidad')
                     ->type('number')
-                    ->title('Capacidad (Mts3)')
+                    ->title('Capacidad (m³)')
                     ->step(0.01),
 
                 Input::make('tipo_camion.capacidad_tonelada')
