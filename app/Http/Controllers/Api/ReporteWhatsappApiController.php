@@ -362,7 +362,7 @@ class ReporteWhatsappApiController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function reporteDiarioWhastappPDF(Request $request)
+    public function reporteDiarioWhastappPDF_old(Request $request)
     {
         // Validar los parámetros
         $request->validate([
@@ -422,5 +422,52 @@ class ReporteWhatsappApiController extends Controller
                 'pdf_url' => $pdfUrl,
             ],
         ]);
+    }
+
+    public function reporteDiarioWhastappPDF(Request $request)
+    {
+        // Validar los parámetros
+        $request->validate([
+            'obra_id' => 'required|exists:obras,id',
+            'fecha' => 'required|date',
+        ]);
+
+        $obraId = $request->obra_id;
+        $fecha = $request->fecha;
+
+        // Obtener los datos del reporte por obra y fecha
+        $resumen = $this->obtenerResumenReporte($obraId, $fecha);
+
+        // Verificar si hay datos
+        if (empty($resumen)) {
+            return response()->json([
+                'success' => false,
+                'messages' => 'No hay datos disponibles para esta fecha',
+                'data' => null,
+            ], 404);
+        }
+
+        // Crear una instancia de Dompdf
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        // Cargar el HTML
+        $dompdf->loadHtml($this->renderizarReporteHTML($resumen));
+
+        // Opciones de configuración
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        // Obtener el PDF en memoria
+        $output = $dompdf->output();
+        $fileName = "reporte_{$obraId}_{$fecha}.pdf";
+
+        // Responder con el PDF directamente en la respuesta HTTP
+        return response($output, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $fileName . '"');
     }
 }
