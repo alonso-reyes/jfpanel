@@ -75,7 +75,7 @@ class ConceptoListLayout extends Table
                 }),
 
 
-            TD::make('descripcion', 'Descripción')
+            TD::make('descripcion', 'Descripción del concepto')
                 ->render(function (Conceptos $concepto) {
                     return $concepto->tipo === 'SUBCAPITULO'
                         ? "<span style='font-weight: bold; color: #1e293b;'>{$concepto->descripcion}</span>"
