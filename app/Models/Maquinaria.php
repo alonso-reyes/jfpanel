@@ -70,8 +70,10 @@ class Maquinaria extends Model
 
     public function scopeInactivas($query)
     {
-        return $query->where('estado', 'INACTIVA')
-            ->orWhere('inactividad', true);
+        return $query->where('estado', 'inactivo');
+
+        //     $query->where('estado', 'inactivo')
+        //   ->whereNotNull('motivo_inactividad_id');
     }
 
     // Luego puedes acceder así:
