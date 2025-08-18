@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CatalogoMotivosInactividadMaquinariaApiController;
 use App\Http\Controllers\Api\ConceptosApiController;
 use App\Http\Controllers\Api\ExportApiController;
 use App\Http\Controllers\Api\ExportarAcarreosApiController;
+use App\Http\Controllers\Api\ExportarMaquinariaInactivaApiController;
 use App\Http\Controllers\Api\GeneralesApiController;
 use App\Http\Controllers\Api\MaterialApiController;
 use App\Http\Controllers\Api\ObraApiController;
@@ -101,6 +102,9 @@ Route::get('/getFactorAbundamiento/{id}', function ($id) {
 
 Route::get('exportar-acarreos/{obraId}', [ExportarAcarreosApiController::class, 'exportar'])->name('exportar.acarreos');
 
+Route::get('exportar-reportejf-individual/{reporteId}', [ExportarAcarreosApiController::class, 'exportar_reportejf_individual'])->name('exportar.reportejf.individual');
+
+Route::get('exportar-maquinaria-inactiva/{obraId}', [ExportarMaquinariaInactivaApiController::class, 'exportar_maquinaria_inactiva'])->name('exportar.lista.maquinaria.inactiva');
 
 
 // Route::post('/getTurnos', [TurnosApiController::class, 'getTurnos'])->middleware('auth:sanctum');

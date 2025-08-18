@@ -68,6 +68,12 @@ class Maquinaria extends Model
         return $this->belongsTo(MotivoInactividad::class, 'motivo_inactividad_id');
     }
 
+    public function scopeInactivas($query)
+    {
+        return $query->where('estado', 'INACTIVA')
+            ->orWhere('inactividad', true);
+    }
+
     // Luego puedes acceder así:
     // $maquinaria->ultimoHorometro->horometro_inicial;
 }

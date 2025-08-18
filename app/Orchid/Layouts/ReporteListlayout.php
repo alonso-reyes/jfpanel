@@ -117,6 +117,9 @@ class ReporteListlayout extends Table
                         ->route('platform.reportes.edit', $reporte)
                         ->render() .
                         Link::make('')
+                        ->icon('file-earmark-excel')
+                        ->route('exportar.reportejf.individual', ['reporteId' => $reporte->id]) .
+                        Link::make('')
                         ->icon('download')
                         ->route('platform.reporte.pdf', $reporte->id)
                         ->target('_blank')

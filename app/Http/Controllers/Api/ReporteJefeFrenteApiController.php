@@ -10,6 +10,7 @@ use App\Models\AcarreoArea;
 use App\Models\AcarreoMetroLineal;
 use App\Models\AcarreoAgua;
 use App\Models\Horometro;
+use App\Models\Maquinaria;
 use App\Models\ReporteFotografia;
 use App\Models\ReporteMaquinaria;
 use App\Models\ReportePersonal;
@@ -203,6 +204,16 @@ class ReporteJefeFrenteApiController extends Controller
                     'horometro_inicial' => $horometro1->horometro_final,
                     'horometro_final' => null,
                 ]);
+
+                if (!is_null($maquinaria['id_motivo_inactividad'])) {
+                    $maquinariaModel = Maquinaria::find($maquinaria['maquinaria']['id']);
+                    if ($maquinariaModel) {
+                        $maquinariaModel->update([
+                            'estado' => 'inactivo', // o el valor que corresponda para estado
+                            'motivo_inactividad_id' => $maquinaria['id_motivo_inactividad']
+                        ]);
+                    }
+                }
             }
             //Log::info('Maquinas creado:', $reporteMaquinas->toArray()); // Registrar el reporte creado
             //Log::info('Horometros creado:', $horometros->toArray()); // Registrar el reporte creado

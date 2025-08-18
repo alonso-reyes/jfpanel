@@ -28,6 +28,7 @@ use App\Orchid\Screens\Examples\ExampleLayoutsScreen;
 use App\Orchid\Screens\Examples\ExampleScreen;
 use App\Orchid\Screens\Examples\ExampleTextEditorsScreen;
 use App\Orchid\Screens\MaquinariaEditScreen;
+use App\Orchid\Screens\MaquinariaInactivaListScreen;
 use App\Orchid\Screens\MaquinariaListScreen;
 use App\Orchid\Screens\MaterialEditScreen;
 use App\Orchid\Screens\MaterialListScreen;
@@ -230,6 +231,8 @@ Route::screen('reporte/{reporte?}', ReporteEditScreen::class)->name('platform.re
 
 Route::screen('reportes_maquinaria', ReporteListScreen::class)->name('platform.reportes.maquinaria.list');
 Route::screen('reporte_maquinaria/{reporte_maquinaria?}', ReporteEditScreen::class)->name('platform.reportes.maquinaria.edit');
+
+Route::screen('maquinarias_inactivas', MaquinariaInactivaListScreen::class)->name('platform.maquinaria.inactiva.list');
 
 ///Acarreos
 Route::screen('acarreovolumen/{acarreovolumen?}', AcarreoVolumenEditScreen::class)->name('platform.acarreovolumen.edit');

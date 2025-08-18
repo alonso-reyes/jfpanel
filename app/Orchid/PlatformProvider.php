@@ -126,6 +126,9 @@ class PlatformProvider extends OrchidServiceProvider
                 ->route('platform.reportes.list')
                 ->title(__('Reportes')),
 
+            Menu::make('Reporte de maquinaria inactiva')
+                ->icon('bs.x-circle-fill')
+                ->route('platform.maquinaria.inactiva.list'),
 
             /////////////////////////////////
 
