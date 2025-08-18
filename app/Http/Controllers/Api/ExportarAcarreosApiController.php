@@ -18,6 +18,7 @@ use PhpOffice\PhpSpreadsheet\Chart\ChartSeries;
 use PhpOffice\PhpSpreadsheet\Chart\ChartSeriesValues;
 use PhpOffice\PhpSpreadsheet\Chart\DataSeries;
 use PhpOffice\PhpSpreadsheet\Chart\DataSeriesValues;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ExportarAcarreosApiController extends Controller
 {
@@ -87,6 +88,68 @@ class ExportarAcarreosApiController extends Controller
             $row++;
         }
 
+        // === AGREGAR GRÁFICA DE BARRAS ===
+
+        if (!empty($datos)) {
+            $pointCount = $row - 2;
+
+            $dataSeriesLabels = [
+                new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
+            ];
+
+            $xAxisTickValues = [
+                new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
+            ];
+
+            // $dataSeriesValues = [
+            //     new DataSeriesValues('Number', "'Resumen de Volumen por Concepto'!\$B\$2:\$B\$" . ($row - 1), null, $pointCount)
+            // ];
+
+            $dataSeriesValues = [
+                new DataSeriesValues('Number', "'Resumen de Volumen por Concepto'!\$D\$2:\$D\$" . ($row - 1), null, $pointCount)
+            ];
+
+
+            // 3. Configurar la serie de datos
+            $series = new DataSeries(
+                DataSeries::TYPE_BARCHART,
+                DataSeries::GROUPING_STANDARD,
+                range(0, count($dataSeriesValues) - 1),
+                $dataSeriesLabels,
+                $xAxisTickValues,
+                $dataSeriesValues
+            );
+
+            // 4. Crear el gráfico completo
+            $plotArea = new PlotArea(null, [$series]);
+            $chart = new Chart(
+                'chart1',
+                new Title('Volumen por Concepto'),
+                new Legend(),
+                $plotArea,
+                true,
+                DataSeries::EMPTY_AS_GAP,
+                new Title('Conceptos'),
+                new Title('Volumen (m³)')
+            );
+
+            // 5. Posicionar el gráfico
+            $chart->setTopLeftPosition('F2');
+            $chart->setBottomRightPosition('P20');
+
+            // 6. Añadir estilo a las celdas de datos (opcional pero recomendado)
+            foreach (range('A', 'D') as $col) {
+                $sheet->getStyle($col . '1')->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFD9D9D9']]
+                ]);
+            }
+            $sheet->addChart($chart);
+        }
+
+
+
+
         // === HOJA 2: Volumen Total por Material ===
         $sheet2 = $spreadsheet->createSheet();
         $sheet2->setTitle('Resumen por Material');
@@ -129,6 +192,51 @@ class ExportarAcarreosApiController extends Controller
             $sheet2->setCellValue("D{$row}", $volumenSuelto);
             $row++;
         }
+
+        // === HOJA 2: Gráfica de pastel ===
+        if (!empty($materiales)) {
+            $lastDataRow2 = count($materiales) + 1;
+
+            // Nombres de materiales en eje (columna A)
+            $xAxisTickValues2 = [
+                new DataSeriesValues('String', "'Resumen por Material'!\$A\$2:\$A\$" . $lastDataRow2)
+            ];
+
+            // Valores de volumen suelto (columna D)
+            $dataSeriesValues2 = [
+                new DataSeriesValues('Number', "'Resumen por Material'!\$D\$2:\$D\$" . $lastDataRow2)
+            ];
+
+            $series2 = new DataSeries(
+                DataSeries::TYPE_PIECHART,     // tipo pastel
+                null,                          // agrupamiento
+                range(0, count($dataSeriesValues2) - 1),
+                [],                            // <-- aquí NO van las etiquetas
+                $xAxisTickValues2,             // <-- las etiquetas van en los ticks
+                $dataSeriesValues2             // valores
+            );
+
+            // $series2->setShowValues(true);
+
+            $plotArea2 = new PlotArea(null, [$series2]);
+            $chart2 = new Chart(
+                'chart2',
+                new Title('Distribución de Volumen por Material'),
+                new Legend(Legend::POSITION_RIGHT, null, false),
+                $plotArea2,
+                true,
+                DataSeries::EMPTY_AS_GAP
+            );
+
+            $chart2->setTopLeftPosition('F2');
+            $chart2->setBottomRightPosition('P20');
+
+            $sheet2->addChart($chart2);
+        }
+
+
+
+
 
         // === HOJA 3: Resumen de viajes por camión ===
         $datos_tipo_camion = [];
