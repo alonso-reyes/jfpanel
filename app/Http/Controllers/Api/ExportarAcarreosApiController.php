@@ -24,9 +24,177 @@ class ExportarAcarreosApiController extends Controller
 
     public function exportar($obraId, Request $request)
     {
-        $start = $request->input('start');
-        $end = $request->input('end');
+        $fecha_inicio = $request->query('fecha_inicio');
+        $fecha_termino = $request->query('fecha_termino');
+        $tipos = ['acarreos_volumen' => 'Volumen'];
+        $datos = [];
 
+        // === HOJA 1: Volumen Total por Concepto ===
+        foreach ($tipos as $tabla => $etiqueta) {
+            $query = DB::table($tabla)
+                ->join('reportes_jefe_frente', "$tabla.reporte_frente_id", '=', 'reportes_jefe_frente.id')
+                ->join('conceptos_presupuesto', "$tabla.concepto_id", '=', 'conceptos_presupuesto.id')
+                ->select(
+                    'conceptos_presupuesto.nombre as concepto',
+                    'conceptos_presupuesto.factor_abundamiento',
+                    DB::raw('SUM(volumen) as total'),
+                    DB::raw("'$etiqueta' as tipo")
+                )
+                ->whereNotNull("$tabla.concepto_id")
+                ->where('reportes_jefe_frente.obra_id', $obraId);
+
+            // Filtro de fechas
+            if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                $query->whereBetween('reportes_jefe_frente.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    $fecha_termino . ' 23:59:59'
+                ]);
+            } elseif (!empty($fecha_inicio)) {
+                $query->whereBetween('reportes_jefe_frente.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    now()->endOfDay()
+                ]);
+            }
+
+            $resultados = $query
+                ->groupBy('conceptos_presupuesto.nombre', 'conceptos_presupuesto.factor_abundamiento')
+                ->get();
+
+            foreach ($resultados as $r) {
+                $datos[] = [
+                    'concepto'            => $r->concepto,
+                    'volumen'             => $r->total,
+                    'factor_abundamiento' => $r->factor_abundamiento,
+                    'volumen_suelto'      => $r->factor_abundamiento != 0
+                        ? $r->total / $r->factor_abundamiento
+                        : 0,
+                ];
+            }
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Resumen de Volumen por Concepto');
+
+        // Encabezados y datos HOJA 1
+        $sheet->fromArray(['Concepto', 'Volumen Total', 'Factor Abundamiento', 'Volumen Suelto'], null, 'A1');
+        $row = 2;
+        foreach ($datos as $dato) {
+            $sheet->setCellValue("A{$row}", $dato['concepto']);
+            $sheet->setCellValue("B{$row}", $dato['volumen']);
+            $sheet->setCellValue("C{$row}", $dato['factor_abundamiento']);
+            $sheet->setCellValue("D{$row}", $dato['volumen_suelto']);
+            $row++;
+        }
+
+        // === HOJA 2: Volumen Total por Material ===
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Resumen por Material');
+
+        $materiales = DB::table('acarreos_volumen')
+            ->join('reportes_jefe_frente', 'acarreos_volumen.reporte_frente_id', '=', 'reportes_jefe_frente.id')
+            ->join('materiales', 'acarreos_volumen.material_id', '=', 'materiales.id')
+            ->select(
+                'materiales.material as material',
+                'materiales.factor_abundamiento as factor_abundamiento',
+                DB::raw('SUM(volumen) as total')
+            )
+            ->whereNotNull('acarreos_volumen.material_id')
+            ->where('reportes_jefe_frente.obra_id', $obraId);
+
+        // Filtro de fechas
+        if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+            $materiales->whereBetween('reportes_jefe_frente.created_at', [
+                $fecha_inicio . ' 00:00:00',
+                $fecha_termino . ' 23:59:59'
+            ]);
+        } elseif (!empty($fecha_inicio)) {
+            $materiales->whereBetween('reportes_jefe_frente.created_at', [
+                $fecha_inicio . ' 00:00:00',
+                now()->endOfDay()
+            ]);
+        }
+
+        $materiales = $materiales
+            ->groupBy('materiales.material', 'materiales.factor_abundamiento')
+            ->get();
+
+        $sheet2->fromArray(['Material', 'Volumen Total', 'Factor Abundamiento', 'Volumen Suelto'], null, 'A1');
+        $row = 2;
+        foreach ($materiales as $mat) {
+            $volumenSuelto = $mat->factor_abundamiento != 0 ? $mat->total / $mat->factor_abundamiento : 0;
+            $sheet2->setCellValue("A{$row}", $mat->material);
+            $sheet2->setCellValue("B{$row}", $mat->total);
+            $sheet2->setCellValue("C{$row}", $mat->factor_abundamiento);
+            $sheet2->setCellValue("D{$row}", $volumenSuelto);
+            $row++;
+        }
+
+        // === HOJA 3: Resumen de viajes por camión ===
+        $datos_tipo_camion = [];
+        $sheet3 = $spreadsheet->createSheet();
+        $sheet3->setTitle('Resumen de viajes por camión');
+
+        foreach ($tipos as $tabla => $etiqueta) {
+            $resultados = DB::table("$tabla as a")
+                ->join('reportes_jefe_frente as rjf', 'a.reporte_frente_id', '=', 'rjf.id')
+                ->join('catalogo_camiones_acarreos as cca', 'a.camion_id', '=', 'cca.id')
+                ->select(
+                    'cca.nombre as tipo_camion',
+                    DB::raw('SUM(a.viajes) as total_viajes'),
+                    DB::raw("'$etiqueta' as tipo")
+                )
+                ->where('rjf.obra_id', $obraId);
+
+            if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                $resultados->whereBetween('rjf.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    $fecha_termino . ' 23:59:59'
+                ]);
+            } elseif (!empty($fecha_inicio)) {
+                $resultados->whereBetween('rjf.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    now()->endOfDay()
+                ]);
+            }
+
+            $resultados = $resultados
+                ->groupBy('cca.nombre')
+                ->get();
+
+            foreach ($resultados as $r) {
+                $datos_tipo_camion[] = [
+                    'tipo_camion' => $r->tipo_camion ?? 'Desconocido',
+                    'total_viajes' => $r->total_viajes,
+                ];
+            }
+        }
+
+        $sheet3->setCellValue('A1', 'Tipo de camión');
+        $sheet3->setCellValue('B1', 'Total de viajes');
+        $row = 2;
+        foreach ($datos_tipo_camion as $dato) {
+            $sheet3->setCellValue("A{$row}", $dato['tipo_camion']);
+            $sheet3->setCellValue("B{$row}", $dato['total_viajes']);
+            $row++;
+        }
+
+        // === EXPORTAMOS ===
+        $fileName = 'total_volumenes.xlsx';
+        $writer = new Xlsx($spreadsheet);
+        $writer->setIncludeCharts(true);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName);
+    }
+
+
+    public function exportar_old($obraId, Request $request)
+    {
+        $fecha_inicio = $request->query('fecha_inicio');
+        $fecha_termino = $request->query('fecha_termino');
+        //dd($end);
         $tipos = ['acarreos_volumen' => 'Volumen'];
         $datos = [];
 
@@ -45,8 +213,18 @@ class ExportarAcarreosApiController extends Controller
                 ->where('reportes_jefe_frente.obra_id', $obraId);
 
             // Filtrar por rango de fechas si se envió
-            if (!empty($start) && !empty($end)) {
-                $query->whereBetween('reportes_jefe_frente.created_at', [$start, $end]);
+            if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                // Desde inicio hasta fin incluyendo ambos días
+                $query->whereBetween('reportes_jefe_frente.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    $fecha_termino . ' 23:59:59'
+                ]);
+            } elseif (!empty($fecha_inicio)) {
+                // Desde fecha_inicio hasta hoy
+                $query->whereBetween('reportes_jefe_frente.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    now()->endOfDay() // Carbon helper para hoy 23:59:59
+                ]);
             }
 
             $resultados = $query
@@ -85,12 +263,10 @@ class ExportarAcarreosApiController extends Controller
             $row++;
         }
 
-
         // === HOJA 2: Volumen Total por Material ===
         $sheet2 = $spreadsheet->createSheet();
         $sheet2->setTitle('Resumen por Material');
 
-        // Consulta por material
         $materiales = DB::table('acarreos_volumen')
             ->join('reportes_jefe_frente', 'acarreos_volumen.reporte_frente_id', '=', 'reportes_jefe_frente.id')
             ->join('materiales', 'acarreos_volumen.material_id', '=', 'materiales.id')
@@ -100,7 +276,23 @@ class ExportarAcarreosApiController extends Controller
                 DB::raw('SUM(volumen) as total')
             )
             ->whereNotNull('acarreos_volumen.material_id')
-            ->where('reportes_jefe_frente.obra_id', $obraId)
+            ->where('reportes_jefe_frente.obra_id', $obraId);
+
+        // Aplicar filtro de fechas
+        if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+            $materiales->whereBetween('reportes_jefe_frente.created_at', [
+                $fecha_inicio . ' 00:00:00',
+                $fecha_termino . ' 23:59:59'
+            ]);
+        } elseif (!empty($fecha_inicio)) {
+            $materiales->whereBetween('reportes_jefe_frente.created_at', [
+                $fecha_inicio . ' 00:00:00',
+                now()->endOfDay()
+            ]);
+        }
+
+        // Agrupar y obtener los resultados
+        $materiales = $materiales
             ->groupBy('materiales.material', 'materiales.factor_abundamiento')
             ->get();
 
@@ -140,7 +332,22 @@ class ExportarAcarreosApiController extends Controller
                     DB::raw('SUM(a.viajes) as total_viajes'),
                     DB::raw("'$etiqueta' as tipo")
                 )
-                ->where('rjf.obra_id', $obraId)
+                ->where('rjf.obra_id', $obraId);
+
+            // Aplicar filtro de fechas
+            if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                $resultados->whereBetween('rjf.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    $fecha_termino . ' 23:59:59'
+                ]);
+            } elseif (!empty($fecha_inicio)) {
+                $resultados->whereBetween('rjf.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    now()->endOfDay()
+                ]);
+            }
+
+            $resultados = $resultados
                 ->groupBy('cca.nombre')
                 ->get();
 
@@ -162,59 +369,6 @@ class ExportarAcarreosApiController extends Controller
             $sheet3->setCellValue("B{$row}", $dato['total_viajes']);
             $row++;
         }
-
-
-
-        // // === GRAFICO DE BARRAS ===
-        // // Solo crear el gráfico si hay datos
-        // if (count($datos) > 0) {
-        //     $rowEnd = $row - 1;
-
-        //     // Referencias corregidas para el gráfico
-        //     $dataSeriesLabels = [
-        //         new DataSeriesValues(DataSeriesValues::DATASERIES_TYPE_STRING, 'Resumen de Acarreos!$B$1', null, 1),
-        //     ];
-
-        //     $xAxisTickValues = [
-        //         new DataSeriesValues(DataSeriesValues::DATASERIES_TYPE_STRING, 'Resumen de Acarreos!$A$2:$A$' . $rowEnd, null, count($datos)),
-        //     ];
-
-        //     $dataSeriesValues = [
-        //         new DataSeriesValues(DataSeriesValues::DATASERIES_TYPE_NUMBER, 'Resumen de Acarreos!$B$2:$B$' . $rowEnd, null, count($datos)),
-        //     ];
-
-        //     $series = new DataSeries(
-        //         DataSeries::TYPE_BARCHART,
-        //         DataSeries::GROUPING_CLUSTERED,
-        //         range(0, count($dataSeriesValues) - 1),
-        //         $dataSeriesLabels,
-        //         $xAxisTickValues,
-        //         $dataSeriesValues
-        //     );
-
-        //     $series->setPlotDirection(DataSeries::DIRECTION_COL);
-
-        //     $plotArea = new PlotArea(null, [$series]);
-        //     $legend = new Legend(Legend::POSITION_RIGHT, null, false);
-        //     $title = new Title('Volumen Total por Concepto');
-
-        //     $chart = new Chart(
-        //         'grafico_volumen',
-        //         $title,
-        //         $legend,
-        //         $plotArea,
-        //         true,
-        //         0,
-        //         null,
-        //         null
-        //     );
-
-        //     // Posicionamos la gráfica en la hoja
-        //     $chart->setTopLeftPosition('D2');
-        //     $chart->setBottomRightPosition('M20');
-
-        //     $sheet->addChart($chart);
-        // }
 
         // === EXPORTAMOS ===
         $fileName = 'total_volumenes.xlsx';

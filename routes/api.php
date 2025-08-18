@@ -102,6 +102,8 @@ Route::get('/getFactorAbundamiento/{id}', function ($id) {
 
 Route::get('exportar-acarreos/{obraId}', [ExportarAcarreosApiController::class, 'exportar'])->name('exportar.acarreos');
 
+//Route::get('exportar-acarreos/{obraId}/{fecha_inicial?}/{fecha_final?}', [ExportarAcarreosApiController::class, 'exportar'])->name('exportar.acarreos');
+
 Route::get('exportar-reportejf-individual/{reporteId}', [ExportarAcarreosApiController::class, 'exportar_reportejf_individual'])->name('exportar.reportejf.individual');
 
 Route::get('exportar-maquinaria-inactiva/{obraId}', [ExportarMaquinariaInactivaApiController::class, 'exportar_maquinaria_inactiva'])->name('exportar.lista.maquinaria.inactiva');

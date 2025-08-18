@@ -19,7 +19,9 @@ class ExportarMaquinariaInactivaApiController extends Controller
 
     public function exportar_maquinaria_inactiva($obraId, Request $request)
     {
-        $datos = [];
+        $spreadsheet = new Spreadsheet();
+        // === HOJA 1: Maquinaria INACTIVA ===
+        $datos_inactivas = [];
         // Subconsulta para obtener el último horómetro de cada maquinaria
         $ultimoHorometro = DB::table('horometros as h1')
             ->select('h1.id')
@@ -52,7 +54,7 @@ class ExportarMaquinariaInactivaApiController extends Controller
         // exit;
 
         foreach ($resultados as $r) {
-            $datos[] = [
+            $datos_inactivas[] = [
                 'numero_economico'    => $r->numero_economico,
                 'tipo_maquinaria'    => $r->tipo_maquinaria,
                 'horometro_inicial'   => $r->horometro_inicial,
@@ -62,7 +64,7 @@ class ExportarMaquinariaInactivaApiController extends Controller
         }
 
 
-        $spreadsheet = new Spreadsheet();
+
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Resumen de maquinaria inactiva');
 
@@ -75,7 +77,7 @@ class ExportarMaquinariaInactivaApiController extends Controller
 
         // Datos
         $row = 2;
-        foreach ($datos as $dato) {
+        foreach ($datos_inactivas as $dato) {
             $sheet->setCellValue("A{$row}", $dato['numero_economico']);
             $sheet->setCellValue("B{$row}", $dato['tipo_maquinaria']);
             $sheet->setCellValue("C{$row}", $dato['horometro_inicial']);
@@ -84,8 +86,67 @@ class ExportarMaquinariaInactivaApiController extends Controller
             $row++;
         }
 
+
+        // === HOJA 2: Maquinaria ACTIVA ===
+        $datos_activa = [];
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Resumen de maquinaria activa');
+        // Subconsulta para obtener el último horómetro de cada maquinaria
+        $ultimoHorometro = DB::table('horometros as h1')
+            ->select('h1.id')
+            ->whereColumn('h1.maquinaria_id', 'maquinarias.id')
+            ->orderBy('h1.id', 'desc')
+            ->limit(1);
+
+        // === HOJA 1: Volumen Total por Concepto ===
+        $query = DB::table('maquinarias')
+            ->join('tipos_maquinaria', 'maquinarias.tipo_maquinaria_id', '=', 'tipos_maquinaria.id')
+            ->join('horometros', function ($join) use ($ultimoHorometro) {
+                $join->on('horometros.id', '=', DB::raw("({$ultimoHorometro->toSql()})"))
+                    ->addBinding($ultimoHorometro->getBindings());
+            })
+            ->select(
+                'maquinarias.numero_economico as numero_economico',
+                'tipos_maquinaria.nombre as tipo_maquinaria',
+                'horometros.horometro_inicial as horometro_inicial',
+                'horometros.horometro_final as horometro_final'
+            )
+            ->where('maquinarias.obra_id', $obraId)
+            ->where('maquinarias.estado', 'activo');
+
+        // Filtrar por rango de fechas si se envió
+        $resultados_activas = $query->get();
+
+        // dd($resultados);
+        // exit;
+
+        foreach ($resultados_activas as $r) {
+            $datos_activa[] = [
+                'numero_economico'    => $r->numero_economico,
+                'tipo_maquinaria'    => $r->tipo_maquinaria,
+                'horometro_inicial'   => $r->horometro_inicial,
+                'horometro_final'     => $r->horometro_final,
+            ];
+        }
+
+        // Encabezados
+        $sheet2->setCellValue('A1', 'Numero economico');
+        $sheet2->setCellValue('B1', 'Tipo de maquinaria');
+        $sheet2->setCellValue('C1', 'Horometro inicial');
+        $sheet2->setCellValue('D1', 'Horometro final');
+
+        // Datos
+        $row = 2;
+        foreach ($datos_activa as $dato) {
+            $sheet2->setCellValue("A{$row}", $dato['numero_economico']);
+            $sheet2->setCellValue("B{$row}", $dato['tipo_maquinaria']);
+            $sheet2->setCellValue("C{$row}", $dato['horometro_inicial']);
+            $sheet2->setCellValue("D{$row}", $dato['horometro_final']);
+            $row++;
+        }
+
         // === EXPORTAMOS ===
-        $fileName = 'resumen_maquinaria_inactiva.xlsx';
+        $fileName = 'resumen_maquinaria.xlsx';
         $writer = new Xlsx($spreadsheet);
         $writer->setIncludeCharts(true);
 
