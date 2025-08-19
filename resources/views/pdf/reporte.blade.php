@@ -449,45 +449,6 @@
     </div>
     @endif
 
-    <!-- @if($reporte->reporteMaquinaria->count() > 0)
-    <div class="section">
-        <div class="section-title">MAQUINARIA Y EQUIPO</div>
-        <table class="table-custom">
-            <thead>
-                <tr>
-                    <th rowspan="2">Actividad/descripción</th>
-                    <th rowspan="2">Número económico</th>
-                    <th rowspan="2">Operador</th>
-                    <th colspan="2" style="text-align: center;">Horómetros</th>
-                </tr>
-                <tr>
-                    <th style="text-align: center;">Inicial</th>
-                    <th style="text-align: center;">Final</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($reporte->reporteMaquinaria as $maquinaria)
-                @php
-                // Obtener el último horómetro registrado para esta máquina
-                $ultimoHorometro = $maquinaria->maquinaria->horometros->last();
-                @endphp
-                <tr>
-                    <td>{{ $maquinaria->concepto->nombre }}</td>
-                    <td>{{ $maquinaria->maquinaria->numero_economico }}</td>
-                    <td>{{ $maquinaria->operador->nombre ?? 'N/A' }}</td>
-                    <td>{{ $maquinaria->horometro_inicial ?? '' }}</td>
-                    <td>{{ $maquinaria->horometro_final ?? '' }}</td>
-             <td>{{ $ultimoHorometro->horometro_inicial ?? 'N/A' }}</td>
-                    <td>{{ $ultimoHorometro->horometro_final ?? 'N/A' }}</td> -->
-    <!-- </tr>
-    @endforeach
-    </tbody>
-    </table>
-    </div>
-    @endif -->
-
-
-
     <!-- Personal -->
     @if($reporte->reportePersonal->count() > 0)
     <div class="section">
