@@ -84,7 +84,51 @@ class PersonalListScreen extends Screen
         $personal->delete();
     }
 
+
     public function excelImport(Request $request)
+    {
+        $obraId = session('obra_id');
+
+        // Obtén el archivo directamente del request
+        if (!$request->hasFile('excel_file')) {
+            Toast::error('No se encontró el archivo en la petición.');
+            return;
+        }
+
+        $file = $request->file('excel_file');
+
+        // Cargar el archivo Excel desde el stream
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray();
+
+        foreach ($rows as $key => $row) {
+            if ($key == 0) continue; // Saltar encabezados
+
+            // Valida repetidos
+            $exists = Personal::where('nombre', $row[0])
+                ->where('obra_id', $obraId)
+                ->first();
+
+            if ($exists) {
+                continue;  // Saltar al siguiente registro
+            }
+
+            $puesto = Puesto::firstOrCreate(
+                ['puesto' => $row[1], 'obra_id' => $obraId],
+            );
+
+            Personal::create([
+                'nombre' => $row[0],
+                'puesto_id' => $puesto->id,
+                'obra_id' => $obraId,
+            ]);
+        }
+
+        Toast::info('Datos importados correctamente.');
+    }
+
+    public function excelImportLocal(Request $request)
     {
         $obraId = session('obra_id');
         // Obtén el ID del archivo subido
