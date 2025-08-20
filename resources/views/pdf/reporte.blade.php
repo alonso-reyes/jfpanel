@@ -411,11 +411,12 @@
                     <th rowspan="2">Actividad/descripción</th>
                     <th rowspan="2">Número económico</th>
                     <th rowspan="2">Operador</th>
-                    <th colspan="2" style="text-align: center;">Horómetros</th>
+                    <th colspan="3" style="text-align: center;">Horómetros</th>
                 </tr>
                 <tr>
                     <th style="text-align: center;">Inicial</th>
                     <th style="text-align: center;">Final</th>
+                    <th style="text-align: center;">Horas efectivas</th>
                 </tr>
             </thead>
             <tbody>
@@ -426,18 +427,25 @@
 
                 @if($registros->count() > 0)
                 @foreach($registros as $registro)
+                @php
+                $inicial = $registro->horometro_inicial ?? 0;
+                $final = $registro->horometro_final ?? 0;
+                $diferencia = $final - $inicial;
+                @endphp
                 <tr>
                     <td>{{ $registro->concepto->nombre ?? '' }}</td>
                     <td>{{ $maquina->numero_economico }}</td>
                     <td>{{ $registro->operador->nombre ?? '' }}</td>
-                    <td>{{ $registro->horometro_inicial ?? '' }}</td>
-                    <td>{{ $registro->horometro_final ?? '' }}</td>
+                    <td>{{ $inicial }}</td>
+                    <td>{{ $final }}</td>
+                    <td>{{ $diferencia }}</td>
                 </tr>
                 @endforeach
                 @else
                 <tr>
                     <td></td>
                     <td>{{ $maquina->numero_economico }}</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -458,6 +466,7 @@
                 <tr>
                     <th>Nombre</th>
                     <th>Cargo</th>
+                    <th>Actividades realizadas</th>
                 </tr>
             </thead>
             <tbody>
@@ -465,6 +474,7 @@
                 <tr>
                     <td>{{ $personal->personal->nombre }}</td>
                     <td>{{ $personal->personal->puesto->puesto }}</td>
+                    <td>{{ $personal->actividades }}</td>
                 </tr>
                 @endforeach
             </tbody>

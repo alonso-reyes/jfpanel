@@ -100,9 +100,19 @@ class ConceptoEditScreen extends Screen
                     ->title('Cantidad')
                     ->step(0.01),
 
+                Input::make('concepto.precio_unitario')
+                    ->type('number')
+                    ->title('Precio unitario')
+                    ->step(0.01),
+
                 Input::make('concepto.factor_abundamiento')
                     ->type('number')
                     ->title('Factor de abundamiento')
+                    ->step(0.01),
+
+                Input::make('concepto.rendimiento_diario')
+                    ->type('number')
+                    ->title('Rendimiento diario')
                     ->step(0.01)
             ])
         ];

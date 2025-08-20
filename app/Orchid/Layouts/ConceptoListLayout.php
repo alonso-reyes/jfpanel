@@ -95,6 +95,20 @@ class ConceptoListLayout extends Table
                     $concepto->tipo === 'SUBCAPITULO' ? '' : number_format($concepto->cantidad, 2)
                 ),
 
+            TD::make('precio_unitario', 'Precio unitario')
+                ->render(
+                    fn(Conceptos $concepto) =>
+                    $concepto->tipo === 'SUBCAPITULO'
+                        ? ''
+                        : '$' . number_format($concepto->precio_unitario, 2)
+                ),
+
+            TD::make('rendimiento_diario', 'Rendimiento diario')
+                ->render(
+                    fn(Conceptos $concepto) =>
+                    $concepto->tipo === 'SUBCAPITULO' ? '' : number_format($concepto->rendimiento_diario, 2)
+                ),
+
             TD::make('')
                 ->alignRight()
                 ->render(function (Conceptos $concepto) {

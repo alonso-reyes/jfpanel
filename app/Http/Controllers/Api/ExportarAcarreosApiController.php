@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Exports\VolumenPorConceptoExport;
+use App\Models\Obra;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,12 @@ class ExportarAcarreosApiController extends Controller
 
     public function exportar($obraId, Request $request)
     {
+        $clave = Obra::where('id', $obraId)->value('clave');
+
+        if (!$clave) {
+            abort(404, 'Obra no encontrada o no tiene clave');
+        }
+
         $fecha_inicio = $request->query('fecha_inicio');
         $fecha_termino = $request->query('fecha_termino');
         $tipos = ['acarreos_volumen' => 'Volumen'];
@@ -288,7 +295,8 @@ class ExportarAcarreosApiController extends Controller
         }
 
         // === EXPORTAMOS ===
-        $fileName = 'total_volumenes.xlsx';
+        $fechaActual = now()->format('Y-m-d');
+        $fileName = "{$clave}_reporte_avance_{$fechaActual}.xlsx";
         $writer = new Xlsx($spreadsheet);
         $writer->setIncludeCharts(true);
 

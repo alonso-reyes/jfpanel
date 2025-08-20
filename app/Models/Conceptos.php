@@ -22,6 +22,8 @@ class Conceptos extends Model
         'unidad',
         'cantidad',
         'factor_abundamiento',
+        'precio_unitario',
+        'rendimiento_diario',
         'obra_id'
     ];
 

@@ -202,6 +202,8 @@ class ConceptoListScreen extends Screen
                 'descripcion' => $row[1],
                 'unidad' => $row[2],
                 'cantidad' => $row[3],
+                'precio_unitario' => $row[4],
+                'rendimiento_diario' => $row[5],
                 'obra_id' => $obraId,
             ]);
         }
