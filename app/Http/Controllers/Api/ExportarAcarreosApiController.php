@@ -141,7 +141,9 @@ class ExportarAcarreosApiController extends Controller
             'Avance programado',
             'Precio unitario',
             'Importe',
-            ''
+            '',
+            'Diferencia real vs programado',
+            '%'
         ], null, 'A5');
 
         $row = 6; // Aqui empiezan los datos a escribirse sin encabezados
@@ -191,7 +193,8 @@ class ExportarAcarreosApiController extends Controller
             $sheet->setCellValue("M{$row}", "=L{$row}*K{$row}");
 
             //Porcentajes
-            $sheet->setCellValue("O{$row}", "=D{$row}/K{$row}");
+            $sheet->setCellValue("O{$row}", "=K{$row}-D{$row}");
+            $sheet->setCellValue("P{$row}", "=D{$row}/K{$row}");
 
             // Formatos
             $sheet->getStyle("F{$row}")
@@ -216,7 +219,7 @@ class ExportarAcarreosApiController extends Controller
                 ->getNumberFormat()
                 ->setFormatCode('"$"#,##0.00_-');
 
-            $sheet->getStyle("O{$row}")
+            $sheet->getStyle("P{$row}")
                 ->getNumberFormat()
                 ->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
 
@@ -225,7 +228,7 @@ class ExportarAcarreosApiController extends Controller
 
 
         // Autoajustar el ancho de las columnas
-        foreach (range('A', 'M') as $column) {
+        foreach (range('A', 'P') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 
@@ -442,6 +445,13 @@ class ExportarAcarreosApiController extends Controller
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFC6EFCE']]
                 ]);
             }
+
+            foreach (range('O', 'P') as $col) {
+                $sheet->getStyle($col . '5')->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'B8C5FF']]
+                ]);
+            }
             $sheet->addChart($chart);
         }
 
@@ -482,7 +492,7 @@ class ExportarAcarreosApiController extends Controller
             ->groupBy('materiales.material', 'materiales.factor_abundamiento')
             ->get();
 
-        $sheet2->fromArray(['Material', 'Volumen Total', 'Factor Abundamiento', 'Volumen Suelto'], null, 'A1');
+        $sheet2->fromArray(['Material', 'Volumen suelto', 'Factor abundamiento', 'Volumen compacto'], null, 'A1');
         $row = 2;
         foreach ($materiales as $mat) {
             $volumenSuelto = $mat->factor_abundamiento != 0 ? $mat->total / $mat->factor_abundamiento : 0;

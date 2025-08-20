@@ -178,17 +178,26 @@ class ReporteJefeFrenteApiController extends Controller
 
         if (!empty($data['data']['maquinaria'])) {
             foreach ($data['data']['maquinaria'] as $maquinaria) {
+                $horometroInicial = $maquinaria['horometro']['horometro_inicial'] ?? null;
+                $horometroFinal   = $maquinaria['horometro']['horometro_final'] ?? null;
+
+                $horasEfectivas = null;
+                if (!is_null($horometroFinal) && !is_null($horometroInicial)) {
+                    $horasEfectivas = $horometroFinal - $horometroInicial;
+                }
+
                 $reporteMaquinas = ReporteMaquinaria::create([
-                    'reporte_frente_id' => $reporte->id,
-                    //'concepto_id' => $maquinaria['concepto']['id'],
-                    'tipo_maquinaria_id' => $maquinaria['familia']['id'],
-                    'maquinaria_id' => $maquinaria['maquinaria']['id'],
-                    'operador_id' => $maquinaria['operador']['id'],
-                    'observaciones' => $maquinaria['observaciones'],
-                    'actividad' => $maquinaria['actividad'],
+                    'reporte_frente_id'     => $reporte->id,
+                    //'concepto_id'          => $maquinaria['concepto']['id'],
+                    'tipo_maquinaria_id'    => $maquinaria['familia']['id'],
+                    'maquinaria_id'         => $maquinaria['maquinaria']['id'],
+                    'operador_id'           => $maquinaria['operador']['id'],
+                    'observaciones'         => $maquinaria['observaciones'],
+                    'actividad'             => $maquinaria['actividad'],
                     'motivo_inactividad_id' => $maquinaria['id_motivo_inactividad'],
-                    'horometro_inicial' => $maquinaria['horometro']['horometro_inicial'],
-                    'horometro_final' => $maquinaria['horometro']['horometro_final'],
+                    'horometro_inicial'     => $horometroInicial,
+                    'horometro_final'       => $horometroFinal,
+                    'horas_efectivas'       => $horasEfectivas,
                 ]);
 
                 // Guardar horómetro
