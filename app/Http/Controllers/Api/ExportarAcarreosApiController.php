@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Exports\VolumenPorConceptoExport;
 use App\Models\Obra;
+use DateTime;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,11 +21,501 @@ use PhpOffice\PhpSpreadsheet\Chart\ChartSeriesValues;
 use PhpOffice\PhpSpreadsheet\Chart\DataSeries;
 use PhpOffice\PhpSpreadsheet\Chart\DataSeriesValues;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class ExportarAcarreosApiController extends Controller
 {
 
     public function exportar($obraId, Request $request)
+    {
+        $clave = Obra::where('id', $obraId)->value('clave');
+
+        if (!$clave) {
+            abort(404, 'Obra no encontrada o no tiene clave');
+        }
+
+        $fecha_inicio_obra = Obra::where('id', $obraId)->value('fecha_inicio');
+        $monto_contrato = Obra::where('id', $obraId)->value('monto_contrato');
+
+        $fecha_inicio = $request->query('fecha_inicio');
+        $fecha_termino = $request->query('fecha_termino');
+        $tipos = ['acarreos_volumen' => 'Volumen'];
+        $datos = [];
+
+        // === HOJA 1: Volumen Total por Concepto ===
+        foreach ($tipos as $tabla => $etiqueta) {
+            $query = DB::table($tabla)
+                ->join('reportes_jefe_frente', "$tabla.reporte_frente_id", '=', 'reportes_jefe_frente.id')
+                ->join('conceptos_presupuesto', "$tabla.concepto_id", '=', 'conceptos_presupuesto.id')
+                ->select(
+                    'conceptos_presupuesto.nombre as concepto',
+                    'conceptos_presupuesto.factor_abundamiento',
+                    'conceptos_presupuesto.cantidad',
+                    'conceptos_presupuesto.precio_unitario',
+                    'conceptos_presupuesto.rendimiento_diario',
+                    DB::raw('SUM(volumen) as total'),
+                    DB::raw("'$etiqueta' as tipo")
+                )
+                ->whereNotNull("$tabla.concepto_id")
+                ->where('reportes_jefe_frente.obra_id', $obraId);
+
+            // Filtro de fechas
+            if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                $query->whereBetween('reportes_jefe_frente.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    $fecha_termino . ' 23:59:59'
+                ]);
+            } elseif (!empty($fecha_inicio)) {
+                $query->whereBetween('reportes_jefe_frente.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    now()->endOfDay()
+                ]);
+            }
+
+            $resultados = $query
+                ->groupBy(
+                    'conceptos_presupuesto.nombre',
+                    'conceptos_presupuesto.factor_abundamiento',
+                    'conceptos_presupuesto.cantidad',
+                    'conceptos_presupuesto.precio_unitario',
+                    'conceptos_presupuesto.rendimiento_diario'
+                )
+                ->get();
+
+            /*foreach ($resultados as $r) {
+                $volumenCompacto = $r->factor_abundamiento != 0 ? $r->total / $r->factor_abundamiento : 0;
+                $porcentajeAvance = $r->cantidad != 0 ? $volumenCompacto / $r->cantidad : 0;
+                $precioUnitario = $r->precio_unitario != null ? $r->precio_unitario : 0;
+                $importe = $volumenCompacto * $precioUnitario;
+
+                $datos[] = [
+                    'concepto'              => $r->concepto,
+                    'volumen_suelto'        => $r->total,
+                    'factor_abundamiento'   => $r->factor_abundamiento,
+                    'volumen_compacto'      => $volumenCompacto,
+                    'cantidad'              => $r->cantidad,
+                    'porcentaje_avance'     => $porcentajeAvance,
+                    'precio_unitario'       => $precioUnitario,
+                    'importe'               => $importe,
+                ];
+            }*/
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Resumen de Volumen por Concepto');
+
+        // Tabla de fechas y días
+        // Convertir a objetos DateTime
+        $sheet->setCellValue("A1", "Fecha de inicio de proyecto:");
+        $sheet->setCellValue("B1", $fecha_inicio_obra);
+
+        $sheet->setCellValue("A2", "Fecha de reporte:");
+        $sheet->setCellValue("B2", !empty($fecha_termino) ? $fecha_termino : date('Y-m-d'));
+
+        $sheet->setCellValue("A3", "Días transcurridos:");
+        // Fórmula para calcular diferencia en días
+        $sheet->setCellValue("B3", '=DATEDIF(B1,B2,"D")');
+
+
+
+
+        // Encabezados y datos HOJA 1
+        $sheet->fromArray([
+            'Concepto',
+            'Volumen suelto',
+            'Factor Abundamiento',
+            'Volumen compacto',
+            'Cantidad total',
+            'Porcentaje de avance',
+            'Precio unitario',
+            'Importe',
+            '',
+            'Rendimiento diario',
+            'Avance programado',
+            'Precio unitario',
+            'Importe',
+            ''
+        ], null, 'A5');
+
+        $row = 6; // Aqui empiezan los datos a escribirse sin encabezados
+        /*foreach ($datos as $dato) {
+            $sheet->setCellValue("A{$row}", $dato['concepto']);
+            $sheet->setCellValue("B{$row}", $dato['volumen_suelto']);
+            $sheet->setCellValue("C{$row}", $dato['factor_abundamiento']);
+            $sheet->setCellValue("D{$row}", $dato['volumen_compacto']);
+            $sheet->setCellValue("E{$row}", $dato['cantidad']);
+            $sheet->setCellValue("F{$row}", $dato['porcentaje_avance']);
+            $sheet->setCellValue("G{$row}", $dato['precio_unitario']);
+            $sheet->setCellValue("H{$row}", $dato['importe']);
+
+            // Aplicar formato de porcentaje a la columna F
+            $sheet->getStyle("F{$row}")
+                ->getNumberFormat()
+                ->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
+
+            $sheet->getStyle("G{$row}")
+                ->getNumberFormat()
+                ->setFormatCode('"$"#,##0.00_-');
+
+            $sheet->getStyle("H{$row}")
+                ->getNumberFormat()
+                ->setFormatCode('"$"#,##0.00_-');
+
+            $row++;
+        }*/
+
+        foreach ($resultados as $r) {
+            //Seccion 1
+            $sheet->setCellValue("A{$row}", $r->concepto);
+            $sheet->setCellValue("B{$row}", $r->total); // volumen_suelto
+            $sheet->setCellValue("C{$row}", $r->factor_abundamiento);
+            $sheet->setCellValue("E{$row}", $r->cantidad);
+            $sheet->setCellValue("G{$row}", $r->precio_unitario ?? 0);
+
+            // Fórmulas en Excel
+            $sheet->setCellValue("D{$row}", "=IF(C{$row}<>0,B{$row}/C{$row},0)");   // volumen compacto
+            $sheet->setCellValue("F{$row}", "=IF(E{$row}<>0,D{$row}/E{$row},0)");   // porcentaje avance
+            $sheet->setCellValue("H{$row}", "=D{$row}*G{$row}");                    // importe
+
+            //Seccion 2
+            $sheet->setCellValue("J{$row}", $r->rendimiento_diario ?? 0);
+            $sheet->setCellValue("K{$row}", "=IF(J{$row}<>0,J{$row}*B3,0)");
+            $sheet->setCellValue("L{$row}", $r->precio_unitario ?? 0);
+            $sheet->setCellValue("M{$row}", "=L{$row}*K{$row}");
+
+            //Porcentajes
+            $sheet->setCellValue("O{$row}", "=D{$row}/K{$row}");
+
+            // Formatos
+            $sheet->getStyle("F{$row}")
+                ->getNumberFormat()
+                ->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
+
+            $sheet->getStyle("G{$row}")
+                ->getNumberFormat()
+                ->setFormatCode('"$"#,##0.00_-');
+
+            $sheet->getStyle("H{$row}")
+                ->getNumberFormat()
+                ->setFormatCode('"$"#,##0.00_-');
+
+
+            $sheet->getStyle("L{$row}")
+                ->getNumberFormat()
+                ->setFormatCode('"$"#,##0.00_-');
+
+
+            $sheet->getStyle("M{$row}")
+                ->getNumberFormat()
+                ->setFormatCode('"$"#,##0.00_-');
+
+            $sheet->getStyle("O{$row}")
+                ->getNumberFormat()
+                ->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
+
+            $row++;
+        }
+
+
+        // Autoajustar el ancho de las columnas
+        foreach (range('A', 'M') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+
+        //AGREGA SUMATORIA DEL IMPORTE
+        $ultimaFila = $row - 1; // porque $row ya avanzó una más
+        $sheet->setCellValue("G{$row}", "TOTAL:");
+        $sheet->setCellValue("H{$row}", "=SUM(H6:H{$ultimaFila})");
+
+        $sheet->setCellValue("L{$row}", "TOTAL:");
+        $sheet->setCellValue("M{$row}", "=SUM(M6:M{$ultimaFila})");
+
+        // Estilo de moneda para el total
+        $sheet->getStyle("H{$row}")
+            ->getNumberFormat()
+            ->setFormatCode('"$"#,##0.00_-');
+
+        $sheet->getStyle("M{$row}")
+            ->getNumberFormat()
+            ->setFormatCode('"$"#,##0.00_-');
+
+
+        // Poner en negritas el total
+        $sheet->getStyle("G{$row}:H{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("L{$row}:M{$row}")->getFont()->setBold(true);
+
+
+        // === Segunda sumatoria (2 filas abajo) ===
+        $row += 2;
+        $sheet->setCellValue("G{$row}", "TOTAL (2da vez):");
+        $sheet->setCellValue("H{$row}", "=SUM(H6:H{$ultimaFila})");
+
+        $sheet->setCellValue("L{$row}", "TOTAL (2da vez):");
+        $sheet->setCellValue("M{$row}", "=SUM(M6:M{$ultimaFila})");
+
+        $sheet->getStyle("G{$row}:H{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("H{$row}")
+            ->getNumberFormat()
+            ->setFormatCode('"$"#,##0.00_-');
+
+        $sheet->getStyle("L{$row}:M{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("M{$row}")
+            ->getNumberFormat()
+            ->setFormatCode('"$"#,##0.00_-');
+
+        // === Monto del contrato (1 fila abajo) ===
+        $row++;
+        $sheet->setCellValue("G{$row}", "MONTO CONTRATO:");
+        $sheet->setCellValue("H{$row}", $monto_contrato);
+
+        $sheet->setCellValue("L{$row}", "MONTO CONTRATO:");
+        $sheet->setCellValue("M{$row}", $monto_contrato);
+
+        $sheet->getStyle("G{$row}:H{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("H{$row}")
+            ->getNumberFormat()
+            ->setFormatCode('"$"#,##0.00_-');
+
+        $sheet->getStyle("L{$row}:M{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("M{$row}")
+            ->getNumberFormat()
+            ->setFormatCode('"$"#,##0.00_-');
+
+        // === División TOTAL / MONTO (1 fila abajo) ===
+        $row++;
+        $sheet->setCellValue("G{$row}", "AVANCE %:");
+        $sheet->setCellValue("H{$row}", "=H" . ($row - 2) . "/H" . ($row - 1));
+
+        $sheet->setCellValue("L{$row}", "AVANCE %:");
+        $sheet->setCellValue("M{$row}", "=M" . ($row - 2) . "/M" . ($row - 1));
+
+        // Estilo porcentaje
+        $sheet->getStyle("H{$row}")
+            ->getNumberFormat()
+            ->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
+
+        $sheet->getStyle("M{$row}")
+            ->getNumberFormat()
+            ->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
+
+        $sheet->getStyle("G{$row}:H{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("L{$row}:M{$row}")->getFont()->setBold(true);
+
+
+        // === AGREGAR GRÁFICA DE BARRAS ===
+
+        /*if (!empty($datos)) {
+            $pointCount = $row - 2;
+
+            $dataSeriesLabels = [
+                new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
+            ];
+
+            $xAxisTickValues = [
+                new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
+            ];
+
+            // $dataSeriesValues = [
+            //     new DataSeriesValues('Number', "'Resumen de Volumen por Concepto'!\$B\$2:\$B\$" . ($row - 1), null, $pointCount)
+            // ];
+
+            $dataSeriesValues = [
+                new DataSeriesValues('Number', "'Resumen de Volumen por Concepto'!\$D\$2:\$D\$" . ($row - 1), null, $pointCount)
+            ];
+
+
+            // 3. Configurar la serie de datos
+            $series = new DataSeries(
+                DataSeries::TYPE_BARCHART,
+                DataSeries::GROUPING_STANDARD,
+                range(0, count($dataSeriesValues) - 1),
+                $dataSeriesLabels,
+                $xAxisTickValues,
+                $dataSeriesValues
+            );
+
+            // 4. Crear el gráfico completo
+            $plotArea = new PlotArea(null, [$series]);
+            $chart = new Chart(
+                'chart1',
+                new Title('Volumen por Concepto'),
+                new Legend(),
+                $plotArea,
+                true,
+                DataSeries::EMPTY_AS_GAP,
+                new Title('Conceptos'),
+                new Title('Volumen (m³)')
+            );
+
+            // 5. Posicionar el gráfico
+            $chart->setTopLeftPosition('F2');
+            $chart->setBottomRightPosition('P20');
+
+            // 6. Añadir estilo a las celdas de datos (opcional pero recomendado)
+            foreach (range('A', 'D') as $col) {
+                $sheet->getStyle($col . '1')->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFD9D9D9']]
+                ]);
+            }
+            $sheet->addChart($chart);
+        }*/
+
+
+
+
+        // === HOJA 2: Volumen Total por Material ===
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Resumen por Material');
+
+        $materiales = DB::table('acarreos_volumen')
+            ->join('reportes_jefe_frente', 'acarreos_volumen.reporte_frente_id', '=', 'reportes_jefe_frente.id')
+            ->join('materiales', 'acarreos_volumen.material_id', '=', 'materiales.id')
+            ->select(
+                'materiales.material as material',
+                'materiales.factor_abundamiento as factor_abundamiento',
+                DB::raw('SUM(volumen) as total')
+            )
+            ->whereNotNull('acarreos_volumen.material_id')
+            ->where('reportes_jefe_frente.obra_id', $obraId);
+
+        // Filtro de fechas
+        if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+            $materiales->whereBetween('reportes_jefe_frente.created_at', [
+                $fecha_inicio . ' 00:00:00',
+                $fecha_termino . ' 23:59:59'
+            ]);
+        } elseif (!empty($fecha_inicio)) {
+            $materiales->whereBetween('reportes_jefe_frente.created_at', [
+                $fecha_inicio . ' 00:00:00',
+                now()->endOfDay()
+            ]);
+        }
+
+        $materiales = $materiales
+            ->groupBy('materiales.material', 'materiales.factor_abundamiento')
+            ->get();
+
+        $sheet2->fromArray(['Material', 'Volumen Total', 'Factor Abundamiento', 'Volumen Suelto'], null, 'A1');
+        $row = 2;
+        foreach ($materiales as $mat) {
+            $volumenSuelto = $mat->factor_abundamiento != 0 ? $mat->total / $mat->factor_abundamiento : 0;
+            $sheet2->setCellValue("A{$row}", $mat->material);
+            $sheet2->setCellValue("B{$row}", $mat->total);
+            $sheet2->setCellValue("C{$row}", $mat->factor_abundamiento);
+            $sheet2->setCellValue("D{$row}", $volumenSuelto);
+            $row++;
+        }
+
+        // === HOJA 2: Gráfica de pastel ===
+        if (!empty($materiales)) {
+            $lastDataRow2 = count($materiales) + 1;
+
+            // Nombres de materiales en eje (columna A)
+            $xAxisTickValues2 = [
+                new DataSeriesValues('String', "'Resumen por Material'!\$A\$2:\$A\$" . $lastDataRow2)
+            ];
+
+            // Valores de volumen suelto (columna D)
+            $dataSeriesValues2 = [
+                new DataSeriesValues('Number', "'Resumen por Material'!\$D\$2:\$D\$" . $lastDataRow2)
+            ];
+
+            $series2 = new DataSeries(
+                DataSeries::TYPE_PIECHART,     // tipo pastel
+                null,                          // agrupamiento
+                range(0, count($dataSeriesValues2) - 1),
+                [],                            // <-- aquí NO van las etiquetas
+                $xAxisTickValues2,             // <-- las etiquetas van en los ticks
+                $dataSeriesValues2             // valores
+            );
+
+            // $series2->setShowValues(true);
+
+            $plotArea2 = new PlotArea(null, [$series2]);
+            $chart2 = new Chart(
+                'chart2',
+                new Title('Distribución de Volumen por Material'),
+                new Legend(Legend::POSITION_RIGHT, null, false),
+                $plotArea2,
+                true,
+                DataSeries::EMPTY_AS_GAP
+            );
+
+            $chart2->setTopLeftPosition('F2');
+            $chart2->setBottomRightPosition('P20');
+
+            $sheet2->addChart($chart2);
+        }
+
+
+
+
+
+        // === HOJA 3: Resumen de viajes por camión ===
+        $datos_tipo_camion = [];
+        $sheet3 = $spreadsheet->createSheet();
+        $sheet3->setTitle('Resumen de viajes por camión');
+
+        foreach ($tipos as $tabla => $etiqueta) {
+            $resultados = DB::table("$tabla as a")
+                ->join('reportes_jefe_frente as rjf', 'a.reporte_frente_id', '=', 'rjf.id')
+                ->join('catalogo_camiones_acarreos as cca', 'a.camion_id', '=', 'cca.id')
+                ->select(
+                    'cca.nombre as tipo_camion',
+                    DB::raw('SUM(a.viajes) as total_viajes'),
+                    DB::raw("'$etiqueta' as tipo")
+                )
+                ->where('rjf.obra_id', $obraId);
+
+            if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                $resultados->whereBetween('rjf.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    $fecha_termino . ' 23:59:59'
+                ]);
+            } elseif (!empty($fecha_inicio)) {
+                $resultados->whereBetween('rjf.created_at', [
+                    $fecha_inicio . ' 00:00:00',
+                    now()->endOfDay()
+                ]);
+            }
+
+            $resultados = $resultados
+                ->groupBy('cca.nombre')
+                ->get();
+
+            foreach ($resultados as $r) {
+                $datos_tipo_camion[] = [
+                    'tipo_camion' => $r->tipo_camion ?? 'Desconocido',
+                    'total_viajes' => $r->total_viajes,
+                ];
+            }
+        }
+
+        $sheet3->setCellValue('A1', 'Tipo de camión');
+        $sheet3->setCellValue('B1', 'Total de viajes');
+        $row = 2;
+        foreach ($datos_tipo_camion as $dato) {
+            $sheet3->setCellValue("A{$row}", $dato['tipo_camion']);
+            $sheet3->setCellValue("B{$row}", $dato['total_viajes']);
+            $row++;
+        }
+
+        // === EXPORTAMOS ===
+        $fechaActual = now()->format('Y-m-d');
+        $fileName = "{$clave}_reporte_avance_{$fechaActual}.xlsx";
+        $writer = new Xlsx($spreadsheet);
+        $writer->setIncludeCharts(true);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName);
+    }
+
+
+    /*public function exportar($obraId, Request $request)
     {
         $clave = Obra::where('id', $obraId)->value('clave');
 
@@ -303,7 +794,7 @@ class ExportarAcarreosApiController extends Controller
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
         }, $fileName);
-    }
+    }*/
 
 
     public function exportar_old($obraId, Request $request)
