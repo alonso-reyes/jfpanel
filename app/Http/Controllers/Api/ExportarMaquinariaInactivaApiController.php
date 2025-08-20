@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Obra;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Chart\Chart;
 use PhpOffice\PhpSpreadsheet\Chart\Legend;
 use PhpOffice\PhpSpreadsheet\Chart\Title;
@@ -156,5 +158,97 @@ class ExportarMaquinariaInactivaApiController extends Controller
 
         $writer->save('php://output');
         exit;
+    }
+
+    public function exportar_reporte_maquinaria_inactiva($obraId, Request $request)
+    {
+        $clave = Obra::where('id', $obraId)->value('clave');
+
+        if (!$clave) {
+            abort(404, 'Obra no encontrada o no tiene clave');
+        }
+
+        $tabla = 'reportes_maquinaria';
+
+        $fecha_inicio = $request->query('fecha_inicio');
+        $fecha_termino = $request->query('fecha_termino');
+
+        $query = DB::table($tabla)
+            ->leftJoin('reportes_jefe_frente', "$tabla.reporte_frente_id", '=', 'reportes_jefe_frente.id')
+            ->leftJoin('tipos_maquinaria', "$tabla.tipo_maquinaria_id", '=', 'tipos_maquinaria.id')
+            ->leftJoin('maquinarias', "$tabla.maquinaria_id", '=', 'maquinarias.id')
+            ->leftJoin('operadores', "$tabla.operador_id", '=', 'operadores.id')
+            ->leftJoin('catalogo_motivos_inactividad_maquinaria', "$tabla.motivo_inactividad_id", '=', 'catalogo_motivos_inactividad_maquinaria.id')
+            ->select(
+                'tipos_maquinaria.nombre as tipo_maquinaria',
+                'maquinarias.numero_economico as numero_economico',
+                'operadores.nombre as operador',
+                "$tabla.horometro_inicial as horometro_inicial",
+                "$tabla.horometro_final as horometro_final",
+                "$tabla.actividad as actividad",
+                'catalogo_motivos_inactividad_maquinaria.motivo_inactividad as motivo_inactividad',
+            )
+            // ->whereNotNull("$tabla.motivo_inactividad_id")
+            ->where('reportes_jefe_frente.obra_id', $obraId);
+
+        if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+            $query->whereBetween("$tabla.created_at", [
+                $fecha_inicio . ' 00:00:00',
+                $fecha_termino . ' 23:59:59'
+            ]);
+        } elseif (!empty($fecha_inicio)) {
+            $query->whereBetween("$tabla.created_at", [
+                $fecha_inicio . ' 00:00:00',
+                now()->endOfDay()
+            ]);
+        }
+
+        $resultados = $query->get();
+        //dd($resultados);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Resumen de Maquinaria');
+
+        $sheet->fromArray([
+            'Familia',
+            'Número económico',
+            'Operador',
+            'Horometro inicial',
+            'Horometro final',
+            'Horas efectivas',
+            'Actividad realizada',
+            'Motivo de inactividad',
+        ], null, 'A1');
+
+        $row = 2;
+
+        foreach ($resultados as $r) {
+            $sheet->setCellValue("A{$row}", $r->tipo_maquinaria);
+            $sheet->setCellValue("B{$row}", $r->numero_economico);
+            $sheet->setCellValue("C{$row}", $r->operador);
+            $sheet->setCellValue("D{$row}", $r->horometro_inicial ?? 0);
+            $sheet->setCellValue("E{$row}", $r->horometro_final ?? 0);
+            $sheet->setCellValue("F{$row}", "=IF(D{$row}<>0,E{$row}-D{$row},0)");
+            $sheet->setCellValue("G{$row}", $r->actividad ?? '');
+            $sheet->setCellValue("H{$row}", $r->motivo_inactividad ?? '');
+
+            $row++;
+        }
+
+        // Autoajustar el ancho de las columnas
+        foreach (range('A', 'H') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        // === EXPORTAMOS ===
+        $fechaActual = now()->format('Y-m-d');
+        $fileName = "{$clave}_reporte_maquinaria_{$fechaActual}.xlsx";
+        $writer = new Xlsx($spreadsheet);
+        $writer->setIncludeCharts(true);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName);
     }
 }

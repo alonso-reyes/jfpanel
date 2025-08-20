@@ -4,6 +4,7 @@ namespace App\Orchid\Screens;
 
 use App\Models\Maquinaria;
 use App\Orchid\Layouts\MaquinariaInactivaListLayout;
+use App\Orchid\Layouts\ReporteDateFilterLayout;
 use Orchid\Screen\Actions\Link;
 use Orchid\Screen\Screen;
 
@@ -56,7 +57,21 @@ class MaquinariaInactivaListScreen extends Screen
     public function layout(): iterable
     {
         return [
+            ReporteDateFilterLayout::class,
             MaquinariaInactivaListLayout::class
         ];
+    }
+
+    public function redirectToExcel()
+    {
+        $fecha_inicio = request()->input('fecha_inicio');
+        $fecha_termino   = request()->input('fecha_termino');
+        $obraId = session('obra_id');
+
+        return redirect()->route('exportar.reporte.maquinaria.inactiva', [
+            'obraId' => $obraId,
+            'fecha_inicio' => $fecha_inicio,
+            'fecha_termino' => $fecha_termino,
+        ]);
     }
 }

@@ -108,6 +108,8 @@ Route::get('exportar-reportejf-individual/{reporteId}', [ExportarAcarreosApiCont
 
 Route::get('exportar-maquinaria-inactiva/{obraId}', [ExportarMaquinariaInactivaApiController::class, 'exportar_maquinaria_inactiva'])->name('exportar.lista.maquinaria.inactiva');
 
+Route::get('exportar-reporte-maquinaria-inactiva/{obraId}', [ExportarMaquinariaInactivaApiController::class, 'exportar_reporte_maquinaria_inactiva'])->name('exportar.reporte.maquinaria.inactiva');
+
 
 // Route::post('/getTurnos', [TurnosApiController::class, 'getTurnos'])->middleware('auth:sanctum');
 
