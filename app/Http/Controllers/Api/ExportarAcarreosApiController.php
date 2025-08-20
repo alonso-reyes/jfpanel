@@ -9,6 +9,7 @@ use DateTime;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Chart\Axis;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Chart\Chart;
@@ -61,15 +62,20 @@ class ExportarAcarreosApiController extends Controller
 
             // Filtro de fechas
             if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                // Ambas fechas
                 $query->whereBetween('reportes_jefe_frente.created_at', [
                     $fecha_inicio . ' 00:00:00',
                     $fecha_termino . ' 23:59:59'
                 ]);
             } elseif (!empty($fecha_inicio)) {
+                // Solo inicio → hasta hoy
                 $query->whereBetween('reportes_jefe_frente.created_at', [
                     $fecha_inicio . ' 00:00:00',
                     now()->endOfDay()
                 ]);
+            } elseif (!empty($fecha_termino)) {
+                // Solo término → desde el inicio de los tiempos
+                $query->where('reportes_jefe_frente.created_at', '<=', $fecha_termino . ' 23:59:59');
             }
 
             $resultados = $query
@@ -306,24 +312,62 @@ class ExportarAcarreosApiController extends Controller
 
         // === AGREGAR GRÁFICA DE BARRAS ===
 
-        /*if (!empty($datos)) {
-            $pointCount = $row - 2;
+        if (!empty($resultados)) {
+            $ultimaFilaDatos = $row - 1;
 
+            $startRow   = 6;                   // tus datos empiezan aquí
+            $endRow     = $ultimaFilaDatos;    // la última fila REAL de datos
+            $pointCount = max(0, $endRow - $startRow + 1);
+            $headerRow  = $startRow - 1;
+
+            // Asegura un encabezado para F (opcional, pero útil para la leyenda)
+            if ($sheet->getCell("F{$headerRow}")->getValue() === null) {
+                $sheet->setCellValue("F{$headerRow}", "Porcentaje de Avance");
+            }
+
+            $sheetName = $sheet->getTitle();
+
+            // Etiqueta de la serie (leyenda): toma el encabezado en F5
             $dataSeriesLabels = [
-                new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
+                new DataSeriesValues(
+                    DataSeriesValues::DATASERIES_TYPE_STRING,
+                    "'{$sheetName}'!\$F\${$headerRow}",
+                    null,
+                    1
+                )
             ];
 
+            // Eje X: conceptos (A6:A{endRow})
             $xAxisTickValues = [
-                new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
+                new DataSeriesValues(
+                    DataSeriesValues::DATASERIES_TYPE_STRING,
+                    "'{$sheetName}'!\$A\${$startRow}:\$A\${$endRow}",
+                    null,
+                    $pointCount
+                )
             ];
 
-            // $dataSeriesValues = [
-            //     new DataSeriesValues('Number', "'Resumen de Volumen por Concepto'!\$B\$2:\$B\$" . ($row - 1), null, $pointCount)
+            // Eje Y: porcentajes (F6:F{endRow})
+            $dataSeriesValues = [
+                new DataSeriesValues(
+                    DataSeriesValues::DATASERIES_TYPE_NUMBER,
+                    "'{$sheetName}'!\$F\${$startRow}:\$F\${$endRow}",
+                    null,
+                    $pointCount
+                )
+            ];
+
+            // $dataSeriesLabels = [
+            //     new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
             // ];
 
-            $dataSeriesValues = [
-                new DataSeriesValues('Number', "'Resumen de Volumen por Concepto'!\$D\$2:\$D\$" . ($row - 1), null, $pointCount)
-            ];
+            // $xAxisTickValues = [
+            //     new DataSeriesValues('String', "'Resumen de Volumen por Concepto'!\$A\$2:\$A\$" . ($row - 1), null, $pointCount)
+            // ];
+
+            // $dataSeriesValues = [
+            //     new DataSeriesValues('Number', "'Resumen de Volumen por Concepto'!\$D\$2:\$D\$" . ($row - 1), null, $pointCount)
+            // ];
 
 
             // 3. Configurar la serie de datos
@@ -337,7 +381,24 @@ class ExportarAcarreosApiController extends Controller
             );
 
             // 4. Crear el gráfico completo
+            $series->setPlotDirection(DataSeries::DIRECTION_COL);
+
             $plotArea = new PlotArea(null, [$series]);
+            // === Definir los ejes ===
+            $xAxis = new Axis();
+            $yAxis = new Axis();
+            $yAxis->setAxisOptionsProperties(
+                'nextTo',   // posición
+                null,       // cruzamiento
+                null,       // unidad mayor
+                0,          // mínimo
+                100,        // máximo
+                null,       // unidad menor
+                null,       // base log
+                true        // visible
+            );
+
+            // Crear el gráfico con ejes definidos
             $chart = new Chart(
                 'chart1',
                 new Title('Volumen por Concepto'),
@@ -345,23 +406,41 @@ class ExportarAcarreosApiController extends Controller
                 $plotArea,
                 true,
                 DataSeries::EMPTY_AS_GAP,
-                new Title('Conceptos'),
-                new Title('Volumen (m³)')
+                new Title('Conceptos'),                 // eje X
+                new Title('Porcentaje de Avance (%)'),  // eje Y
+                $xAxis,
+                $yAxis
             );
-
             // 5. Posicionar el gráfico
-            $chart->setTopLeftPosition('F2');
-            $chart->setBottomRightPosition('P20');
+            $chart->setTopLeftPosition('Q2');
+            $chart->setBottomRightPosition('AB20');
 
             // 6. Añadir estilo a las celdas de datos (opcional pero recomendado)
-            foreach (range('A', 'D') as $col) {
-                $sheet->getStyle($col . '1')->applyFromArray([
+            foreach (range(1, 3) as $row) {
+                $sheet->getStyle("A{$row}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'color' => ['argb' => 'FFD9D9D9'] // mismo verde bajito
+                    ]
+                ]);
+            }
+
+            foreach (range('A', 'H') as $col) {
+                $sheet->getStyle($col . '5')->applyFromArray([
                     'font' => ['bold' => true],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFD9D9D9']]
                 ]);
             }
+
+            foreach (range('J', 'M') as $col) {
+                $sheet->getStyle($col . '5')->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFC6EFCE']]
+                ]);
+            }
             $sheet->addChart($chart);
-        }*/
+        }
 
 
 
@@ -392,6 +471,8 @@ class ExportarAcarreosApiController extends Controller
                 $fecha_inicio . ' 00:00:00',
                 now()->endOfDay()
             ]);
+        } elseif (!empty($fecha_termino)) {
+            $materiales->where('reportes_jefe_frente.created_at', '<=', $fecha_termino . ' 23:59:59');
         }
 
         $materiales = $materiales
@@ -407,6 +488,11 @@ class ExportarAcarreosApiController extends Controller
             $sheet2->setCellValue("C{$row}", $mat->factor_abundamiento);
             $sheet2->setCellValue("D{$row}", $volumenSuelto);
             $row++;
+        }
+
+        // Autoajustar el ancho de las columnas
+        foreach (range('A', 'D') as $column) {
+            $sheet2->getColumnDimension($column)->setAutoSize(true);
         }
 
         // === HOJA 2: Gráfica de pastel ===
@@ -447,6 +533,14 @@ class ExportarAcarreosApiController extends Controller
             $chart2->setTopLeftPosition('F2');
             $chart2->setBottomRightPosition('P20');
 
+
+            foreach (range('A', 'D') as $col) {
+                $sheet2->getStyle($col . '1')->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFD9D9D9']]
+                ]);
+            }
+
             $sheet2->addChart($chart2);
         }
 
@@ -471,16 +565,22 @@ class ExportarAcarreosApiController extends Controller
                 ->where('rjf.obra_id', $obraId);
 
             if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+                // Ambas fechas
                 $resultados->whereBetween('rjf.created_at', [
                     $fecha_inicio . ' 00:00:00',
                     $fecha_termino . ' 23:59:59'
                 ]);
             } elseif (!empty($fecha_inicio)) {
+                // Solo fecha de inicio → hasta hoy
                 $resultados->whereBetween('rjf.created_at', [
                     $fecha_inicio . ' 00:00:00',
                     now()->endOfDay()
                 ]);
+            } elseif (!empty($fecha_termino)) {
+                // Solo fecha de término → desde el inicio de los tiempos hasta fecha_termino
+                $resultados->where('rjf.created_at', '<=', $fecha_termino . ' 23:59:59');
             }
+
 
             $resultados = $resultados
                 ->groupBy('cca.nombre')
@@ -502,6 +602,19 @@ class ExportarAcarreosApiController extends Controller
             $sheet3->setCellValue("B{$row}", $dato['total_viajes']);
             $row++;
         }
+
+        // Autoajustar el ancho de las columnas
+        foreach (range('A', 'B') as $column) {
+            $sheet3->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        foreach (range('A', 'B') as $col) {
+            $sheet3->getStyle($col . '1')->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFD9D9D9']]
+            ]);
+        }
+
 
         // === EXPORTAMOS ===
         $fechaActual = now()->format('Y-m-d');
@@ -1238,5 +1351,36 @@ class ExportarAcarreosApiController extends Controller
 
         $writer->save('php://output');
         exit;
+    }
+
+    function aplicarEstilos($sheet, $row, $columnStyles = [])
+    {
+        foreach ($columnStyles as $col => $tipo) {
+            $style = $sheet->getStyle("{$col}{$row}");
+
+            switch (strtoupper($tipo)) {
+                case 'PORCENTAJE':
+                    $style->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
+                    break;
+
+                case 'NUMERICO':
+                    $style->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
+                    break;
+
+                case 'PESOS':
+                    $style->getNumberFormat()->setFormatCode('"$"#,##0.00_-');
+                    break;
+
+                case 'NEGRITAS':
+                    $style->getFont()->setBold(true);
+                    break;
+
+                case 'PORCENTAJE_SIN_DECIMALES':
+                    $style->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_PERCENTAGE);
+                    break;
+
+                    // Puedes agregar más casos según necesites
+            }
+        }
     }
 }

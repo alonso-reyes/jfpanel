@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Chart\Title;
 use PhpOffice\PhpSpreadsheet\Chart\PlotArea;
 use PhpOffice\PhpSpreadsheet\Chart\DataSeries;
 use PhpOffice\PhpSpreadsheet\Chart\DataSeriesValues;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ExportarMaquinariaInactivaApiController extends Controller
 {
@@ -183,7 +184,8 @@ class ExportarMaquinariaInactivaApiController extends Controller
                 'tipos_maquinaria.nombre as tipo_maquinaria',
                 'maquinarias.numero_economico as numero_economico',
                 'operadores.nombre as operador',
-                "$tabla.horometro_inicial as horometro_inicial",
+                // "$tabla.horometro_inicial as horometro_inicial",
+                'maquinarias.horometro_inicial as horometro_inicial',
                 "$tabla.horometro_final as horometro_final",
                 "$tabla.actividad as actividad",
                 'catalogo_motivos_inactividad_maquinaria.motivo_inactividad as motivo_inactividad',
@@ -192,16 +194,22 @@ class ExportarMaquinariaInactivaApiController extends Controller
             ->where('reportes_jefe_frente.obra_id', $obraId);
 
         if (!empty($fecha_inicio) && !empty($fecha_termino)) {
+            // Ambas fechas
             $query->whereBetween("$tabla.created_at", [
                 $fecha_inicio . ' 00:00:00',
                 $fecha_termino . ' 23:59:59'
             ]);
         } elseif (!empty($fecha_inicio)) {
+            // Solo fecha de inicio → hasta hoy
             $query->whereBetween("$tabla.created_at", [
                 $fecha_inicio . ' 00:00:00',
                 now()->endOfDay()
             ]);
+        } elseif (!empty($fecha_termino)) {
+            // Solo fecha de término → desde el inicio de los tiempos hasta fecha_termino
+            $query->where("$tabla.created_at", '<=', $fecha_termino . ' 23:59:59');
         }
+
 
         $resultados = $query->get();
         //dd($resultados);
@@ -239,6 +247,13 @@ class ExportarMaquinariaInactivaApiController extends Controller
         // Autoajustar el ancho de las columnas
         foreach (range('A', 'H') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        foreach (range('A', 'H') as $col) {
+            $sheet->getStyle($col . '1')->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFD9D9D9']]
+            ]);
         }
 
         // === EXPORTAMOS ===
