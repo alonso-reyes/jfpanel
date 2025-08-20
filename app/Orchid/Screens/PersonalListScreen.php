@@ -96,8 +96,14 @@ class PersonalListScreen extends Screen
             return;
         }
 
+        // $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
+        // $filePath = public_path("storage" . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension);
+
         $fileExtension = strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION));
-        $filePath = public_path("storage" . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension);
+
+        $storageRelativePath = 'app/public/' . str_replace('/', DIRECTORY_SEPARATOR, $attachment->path) . $attachment->name . '.' . $fileExtension;
+
+        $filePath = storage_path($storageRelativePath);
 
         // Verifica si el archivo realmente existe
         if (!file_exists($filePath)) {
