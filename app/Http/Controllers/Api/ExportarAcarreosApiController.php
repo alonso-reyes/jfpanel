@@ -412,8 +412,11 @@ class ExportarAcarreosApiController extends Controller
                 $yAxis
             );
             // 5. Posicionar el gráfico
-            $chart->setTopLeftPosition('Q2');
-            $chart->setBottomRightPosition('AB20');
+            $filaInicio = $ultimaFilaDatos + 5;
+            $filaFin = $filaInicio + 18; // gráfico de ~18 filas de alto
+
+            $chart->setTopLeftPosition("A{$filaInicio}");
+            $chart->setBottomRightPosition("H{$filaFin}");
 
             // 6. Añadir estilo a las celdas de datos (opcional pero recomendado)
             foreach (range(1, 3) as $row) {
