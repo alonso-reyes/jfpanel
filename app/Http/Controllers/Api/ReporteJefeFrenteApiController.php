@@ -29,6 +29,9 @@ class ReporteJefeFrenteApiController extends Controller
         //Log::info('Datos recibidos:', $request->all()); 
         //Log::info('Datos recibidos:', $request['data']['acarreos_volumen']);
 
+        // Obtener los datos de la solicitud
+        $data = $request->all();
+
 
         // Validar la solicitud
         $request->validate([
@@ -54,8 +57,7 @@ class ReporteJefeFrenteApiController extends Controller
             ]
         ]);
 
-        // Obtener los datos de la solicitud
-        $data = $request->all();
+
 
         $usuario = UsuariosJefeFrente::find($data['data']['usuario_id']);
         $nombreUsuario = $usuario ? $usuario->nombre : 'Desconocido';
